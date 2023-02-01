@@ -1,0 +1,37 @@
+name: client
+on:
+  push:
+    branches: [ 'main' ]
+jobs:
+  runs_script:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run script file
+    run: |
+      chmod +x ./deploy.sh
+      ./deploy.sh
+    shell: bash
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout/@v2
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: abeesdevjs
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Setup Docker Build
+        uses: docker/setup-buildx-action@v1
+        id: buildx
+      - name: Build and Push Docker
+        uses: docker/build-push-action@v2
+        id: docker_build
+        with:
+          context: ./deploy
+          file: ./deploy/Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: abeesdevjs/nestjs-github-actions:0.0.1

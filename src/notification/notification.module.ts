@@ -22,16 +22,3 @@ import { PostProvider } from '../post/entities/post.entity';
   providers: [NotificationService],
 })
 export class NotificationModule {}
-
-const myDog = {
-  name: 'Max',
-  age: 3,
-};
-
-for (const key in myDog) {
-  console.log(key, myDog[key]);
-}
-
-for (const [key, value] of Object.entries(myDog)) {
-  console.log(key, value);
-}

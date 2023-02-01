@@ -33,8 +33,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: [process.env.CLIENT_URL],
-    credentials: true,
+    origin: true,
   });
 
   app.useGlobalFilters(new NotFoundExceptionFilter());
