@@ -10,6 +10,11 @@ import { FriendModule } from './friend/friend.module';
 import { FollowUserModule } from './follow-user/follow-user.module';
 import { PostModule } from './post/post.module';
 import { ConversationModule } from './conversation/conversation.module';
+import { MessageModule } from './message/message.module';
+import { RedisModule } from './redis/redis.module';
+import { AppGatewayModule } from './app-gateway/app-gateway.module';
+import { CommentModule } from './comment/comment.module';
+import { ReactionModule } from './reaction/reaction.module';
 
 @Module({
   imports: [
@@ -21,6 +26,7 @@ import { ConversationModule } from './conversation/conversation.module';
       useFactory: (configService: ConfigService) => configService.createMongooseOptions(),
       inject: [ConfigService],
     }),
+
     ConfigModule,
     DataModule,
     UserModule,
@@ -29,6 +35,11 @@ import { ConversationModule } from './conversation/conversation.module';
     FollowUserModule,
     PostModule,
     ConversationModule,
+    MessageModule,
+    RedisModule,
+    AppGatewayModule,
+    CommentModule,
+    ReactionModule,
   ],
 })
 export class AppModule {}

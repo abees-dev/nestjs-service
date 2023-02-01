@@ -2,7 +2,7 @@ export class ConversationResponse {
   _id: string;
   avatar: string;
   description: string;
-  is_deleted: number;
+  deleted: number;
   is_notification: number;
   is_pinned: number;
   last_message: string;
@@ -20,7 +20,7 @@ export class ConversationResponse {
     this._id = conversation?._id ?? null;
     this.avatar = conversation?.avatar ?? '';
     this.description = conversation?.description ?? '';
-    this.is_deleted = conversation?.is_deleted ?? 0;
+    this.deleted = conversation?.deleted ?? 0;
     this.is_notification = conversation?.is_notification ?? 0;
     this.is_pinned = conversation?.is_pinned ?? 0;
     this.last_message = conversation?.last_message ?? '';

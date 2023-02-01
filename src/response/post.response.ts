@@ -45,7 +45,7 @@ export class PostResponse {
     description: 'Post No of Comments',
     example: 0,
   })
-  no_of_comments: number;
+  no_of_comment: number;
 
   @ApiProperty({
     description: 'Post No of Dear',
@@ -122,6 +122,12 @@ export class PostResponse {
   })
   user: UserResponse;
 
+  position: number;
+
+  createdAt: Date;
+
+  updatedAt: Date;
+
   constructor(post: Partial<PostResponse>) {
     this._id = post?._id ?? '';
     this.caption = post?.caption ?? '';
@@ -129,7 +135,7 @@ export class PostResponse {
     this.location = post?.location ?? '';
     this.title = post?.title ?? '';
     this.no_of_angry = post?.no_of_angry ?? 0;
-    this.no_of_comments = post?.no_of_comments ?? 0;
+    this.no_of_comment = post?.no_of_comment ?? 0;
     this.no_of_dear = post?.no_of_dear ?? 0;
     this.no_of_haha = post?.no_of_haha ?? 0;
     this.no_of_like = post?.no_of_like ?? 0;
@@ -143,6 +149,13 @@ export class PostResponse {
     this.tag = UserResponse.mapList(post.tag);
     this.user = new UserResponse(post.user);
     this.medias = MediaResponse.mapList(post.medias);
+    this.position = post?.createdAt ? new Date(post.createdAt).getTime() : 0;
+    this.createdAt = post?.createdAt ?? null;
+    this.updatedAt = post?.updatedAt ?? null;
+  }
+
+  static mapList(posts: Partial<PostResponse>[]): PostResponse[] {
+    return posts.map((post) => new PostResponse(post));
   }
 }
 

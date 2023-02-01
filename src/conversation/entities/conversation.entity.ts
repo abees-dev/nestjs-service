@@ -21,7 +21,7 @@ export class Conversation {
   @Prop({ type: [mongoose.Schema.Types.ObjectId] })
   members: string[];
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, default: null })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, default: new mongoose.Types.ObjectId() })
   last_message: string;
 
   @Prop({ type: Number, default: 0 })
@@ -34,7 +34,7 @@ export class Conversation {
   is_notification: number;
 
   @Prop({ type: Number, default: 0 })
-  is_deleted: number;
+  deleted: number;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId })
   setting: string;

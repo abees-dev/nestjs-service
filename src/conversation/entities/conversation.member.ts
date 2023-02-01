@@ -24,7 +24,7 @@ export class ConversationMember {
   @Prop({ type: Number, default: 0 })
   is_deleted: boolean;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, default: null })
+  @Prop({ type: mongoose.Schema.Types.ObjectId,default: new mongoose.Types.ObjectId() })
   last_seen_message: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, default: new mongoose.Types.ObjectId() })

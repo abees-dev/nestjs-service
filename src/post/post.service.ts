@@ -35,7 +35,29 @@ export class PostService {
         ...createPostDto,
         user: user_id,
       });
-      return await post.save();
+      await post.save();
+
+      const postResponse = await this.postModel.aggregate([
+        {
+          $match: { _id: post._id },
+        },
+        {
+          $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' },
+        },
+        {
+          $lookup: { from: 'users', localField: 'tag', foreignField: '_id', as: 'tag' },
+        },
+        {
+          $lookup: { from: 'uploads', localField: 'medias', foreignField: '_id', as: 'medias' },
+        },
+        {
+          $unwind: '$user',
+        },
+      ]);
+
+      return new BaseResponse({
+        data: new PostResponse(postResponse[0]),
+      });
     } catch (e) {
       throw new CatchError(e);
     }
@@ -86,6 +108,31 @@ export class PostService {
             },
           },
           {
+            $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' },
+          },
+          {
+            $lookup: { from: 'users', localField: 'tag', foreignField: '_id', as: 'tag' },
+          },
+          {
+            $lookup: { from: 'uploads', localField: 'medias', foreignField: '_id', as: 'medias' },
+          },
+          {
+            $lookup: {
+              from: 'comments',
+              localField: '_id',
+              foreignField: 'post_id',
+              as: 'comments',
+              pipeline: [
+                {
+                  $match: { deleted: BOOLEAN.FALSE, comment_reply_id: null },
+                },
+              ],
+            },
+          },
+          {
+            $unwind: '$user',
+          },
+          {
             $match: {
               $or: [
                 { $and: [{ view: { $in: [0, 1] } }, { 'friendship.0': { $exists: true } }] },
@@ -96,22 +143,16 @@ export class PostService {
               deleted: BOOLEAN.FALSE,
             },
           },
+          {
+            $addFields: {
+              no_of_comment: { $size: '$comments' },
+            },
+          },
         ])
-        .limit(numberOfLimit)
         .sort({ createdAt: -1 })
-        .lookup({ from: 'users', localField: 'user', foreignField: '_id', as: 'user' })
-        .lookup({ from: 'users', localField: 'tag', foreignField: '_id', as: 'tag' })
-        .lookup({ from: 'uploads', localField: 'medias', foreignField: '_id', as: 'medias' });
+        .limit(numberOfLimit);
 
-      const mapList = data.map((item) => {
-        return {
-          ...new PostResponse(item),
-          user: new UserResponse(item.user[0]),
-          position: new Date(item.createdAt).getTime(),
-        };
-      });
-
-      return new BaseResponse({ data: mapList });
+      return new BaseResponse({ data: PostResponse.mapList(data) });
     } catch (e) {
       throw new CatchError(e);
     }

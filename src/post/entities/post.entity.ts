@@ -1,6 +1,5 @@
 import { ModelDefinition, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { Upload, UploadSchema } from './uplpad.entity';
 import { User } from '../../user/entities/user.entity';
 
 @Schema({
@@ -34,18 +33,12 @@ export class Post {
   @Prop({
     type: [mongoose.Schema.Types.ObjectId],
   })
-  medias: Upload[];
+  medias: string[];
 
   @Prop({
     type: [mongoose.Schema.Types.ObjectId],
   })
   tag: User[];
-
-  @Prop({
-    type: Number,
-    default: 0,
-  })
-  no_of_comments: number;
 
   @Prop({
     type: Number,

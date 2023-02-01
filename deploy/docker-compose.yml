@@ -11,7 +11,7 @@ services:
       - '8080:8080'
     environment:
       - CONFIG_PORT=8080
-      - CONFIG_MONGO_URI=mongodb://178.128.48.4:27017/nestjs
+      - CONFIG_MONGO_URI=mongodb://abees:cinDXmVW9fYagkzE7Ujhdnk5nyxzSCd1@178.128.48.4:27017/nestjs
       - CONFIG_PREFIX=api/v1
       - CONFIG_ACCESS_TOKEN_SECRET=B7fBp6C1yqMNPZX5UpweV58zMjT6cRXx
       - CONFIG_REFRESH_TOKEN_SECRET=xAtRbS2CU2RwAkWFyQtuDLyC4gSI8bDi
@@ -19,4 +19,4 @@ services:
       - CONFIG_GOOGLE_CLIENT_SECRET=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
       - CONFIG_GOOGLE_CALLBACK_URL=http://localhost:8080/api/v1/auth/google/callback
       - CONFIG_PASSWORD_DEFAULT=8wRjhhoGV9gguttqfIucC1oTVM4jUYCZ
-
+      - CONFIG_REDIS_URL=redis://:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@178.128.48.4:6379
