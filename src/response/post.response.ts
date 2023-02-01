@@ -128,6 +128,8 @@ export class PostResponse {
 
   updatedAt: Date;
 
+  my_reaction: number;
+
   constructor(post: Partial<PostResponse>) {
     this._id = post?._id ?? '';
     this.caption = post?.caption ?? '';
@@ -152,6 +154,7 @@ export class PostResponse {
     this.position = post?.createdAt ? new Date(post.createdAt).getTime() : 0;
     this.createdAt = post?.createdAt ?? null;
     this.updatedAt = post?.updatedAt ?? null;
+    this.my_reaction = post?.my_reaction ?? 0;
   }
 
   static mapList(posts: Partial<PostResponse>[]): PostResponse[] {

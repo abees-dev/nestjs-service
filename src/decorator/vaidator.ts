@@ -30,7 +30,6 @@ export function IsObjectIdOptional(validationOptions?: ValidationOptions) {
       validator: {
         validate: (value: any): boolean => {
           if (!value) return true;
-
           return verifyObjectId(value);
         },
         defaultMessage(): string {

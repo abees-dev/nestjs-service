@@ -1,17 +1,24 @@
 import { Body, Controller, Get, HttpStatus, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateNoOfFriendDto, UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { IRequest } from '../types/context';
 import { GetProfileParamsDto } from './dto/params.dto';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BaseResponse } from '../response';
 import { UserResponseSwagger } from '../response/userDetail.response';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MESSAGE_PATTERN } from '../enum';
 
 @Controller('user')
 @ApiTags('User Controller')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @MessagePattern(MESSAGE_PATTERN.UPDATE_NO_OF_FRIEND)
+  async updateNoOfFriend(@Payload() updateNoOfFriendDto: UpdateNoOfFriendDto) {
+    return this.userService.updateNoOfFriend(updateNoOfFriendDto);
+  }
 
   @Get('/:user_id')
   @UseGuards(AuthGuard)

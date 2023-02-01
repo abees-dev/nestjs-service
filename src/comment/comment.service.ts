@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { COMMENT_SCHEMA, CommentDocument } from './entities/comment.entity';
@@ -6,17 +6,21 @@ import mongoose, { Model } from 'mongoose';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
 import { verifyObjectId } from '../utils/util.objectId';
 import { BaseResponse } from '../response';
-import { BOOLEAN } from '../enum';
+import { BOOLEAN, MESSAGE_PATTERN, NOTIFICATION_TYPE } from '../enum';
 import { POST_SCHEMA, PostDocument } from '../post/entities/post.entity';
 import { QueryCommentDto } from './dto/query-comment.dto';
 import { CommentResponse } from '../response/comment.response';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { MICRO_SERVICE } from '../contrains';
+import { Microservice } from '../microservice/micro.service';
+import { PayloadNotificationDto } from '../notification/dto/payload-notification.dto';
 
 @Injectable()
 export class CommentService {
   constructor(
     @InjectModel(COMMENT_SCHEMA) private commentDocument: Model<CommentDocument>,
     @InjectModel(POST_SCHEMA) private postDocument: Model<PostDocument>,
+    @Inject(MICRO_SERVICE) private microservice: Microservice,
   ) {}
 
   async createComment(user_id: string, createCommentDto: CreateCommentDto) {
@@ -45,11 +49,29 @@ export class CommentService {
       });
 
       await comment.save();
+      this.microservice.send(MESSAGE_PATTERN.ADD_NEW_FOLLOW_POST, { user_id, post_id: rest.post_id });
 
-      return new BaseResponse({
-        data: {
-          comment_id: comment._id,
+      const commentResponse = await this.commentDocument.aggregate([
+        {
+          $match: { _id: new mongoose.Types.ObjectId(comment._id) },
         },
+        {
+          $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' },
+        },
+        { $unwind: '$user' },
+      ]);
+
+      this.microservice.send<PayloadNotificationDto>(MESSAGE_PATTERN.NOTIFY_PRIORITY_HANDLER, {
+        user_id,
+        notification_type: NOTIFICATION_TYPE.COMMENT_POST,
+        avatar: commentResponse[0].user.avatar,
+        object_id: rest.post_id,
+        title: 'Comment',
+        content: 'Đã comment bài viết của bạn',
+        name: commentResponse[0].user.full_name,
+      });
+      return new BaseResponse({
+        data: commentResponse[0],
       });
     } catch (e) {
       throw new CatchError(e);
@@ -86,6 +108,19 @@ export class CommentService {
             $lookup: { from: 'users', localField: 'tag', foreignField: '_id', as: 'tag' },
           },
           {
+            $lookup: {
+              from: 'reactions',
+              localField: '_id',
+              foreignField: 'object_id',
+              as: 'reactions',
+              pipeline: [
+                {
+                  $match: { user_id: new mongoose.Types.ObjectId(user_id) },
+                },
+              ],
+            },
+          },
+          {
             $unwind: { path: '$user', preserveNullAndEmptyArrays: true },
           },
           {
@@ -94,6 +129,7 @@ export class CommentService {
           {
             $addFields: {
               no_of_reply: { $size: '$reply' },
+              my_reaction: { $arrayElemAt: ['$reactions.type', 0] },
             },
           },
           {

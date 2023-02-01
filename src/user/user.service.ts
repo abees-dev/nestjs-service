@@ -5,7 +5,7 @@ import { BaseResponse } from '../response';
 import { IFromLookup, UserDetailResponse } from '../response/userDetail.response';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
 import { Format } from '../utils/utils.format';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateNoOfFriendDto, UpdateProfileDto } from './dto/update-profile.dto';
 import { UserDocument, USER_SCHEMA } from './entities/user.entity';
 
 @Injectable()
@@ -70,5 +70,11 @@ export class UserService {
     } catch (error) {
       throw new CatchError(error);
     }
+  }
+
+  async updateNoOfFriend(updateNoOfFriendDto: UpdateNoOfFriendDto) {
+    const { user_id, target_id, method } = updateNoOfFriendDto;
+    await this.userDocument.findByIdAndUpdate(user_id, { $inc: { no_of_friends: method === 1 ? 1 : -1 } });
+    await this.userDocument.findByIdAndUpdate(target_id, { $inc: { no_of_friends: method === 1 ? 1 : -1 } });
   }
 }

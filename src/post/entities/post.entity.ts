@@ -22,7 +22,7 @@ export class Post {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   })
-  user: string;
+  user: User;
 
   @Prop({
     type: Number,

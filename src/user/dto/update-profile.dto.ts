@@ -107,3 +107,9 @@ export class UpdateProfileDto {
   @IsOptional()
   lng: number;
 }
+
+export class UpdateNoOfFriendDto {
+  user_id: string;
+  target_id: string;
+  method: number;
+}

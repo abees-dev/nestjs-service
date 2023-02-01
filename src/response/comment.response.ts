@@ -25,6 +25,7 @@ export class CommentResponse {
   position: number;
   createdAt: Date;
   updatedAt: Date;
+  my_reaction: number;
 
   constructor(comment: CommentResponse) {
     this._id = comment?._id ?? '';
@@ -49,6 +50,7 @@ export class CommentResponse {
     this.position = comment?.createdAt ? new Date(comment.createdAt).getTime() : 0;
     this.createdAt = comment?.createdAt ?? null;
     this.updatedAt = comment?.updatedAt ?? null;
+    this.my_reaction = comment?.my_reaction ?? 0;
   }
 
   static mapList(comments: CommentResponse[]): CommentResponse[] {

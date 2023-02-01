@@ -5,6 +5,8 @@ import { ExceptionResponse, getMessageValidationError } from './utils/utils.erro
 import cookieParser from 'cookie-parser';
 import { NotFoundExceptionFilter } from './utils/util.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { CONFIG_SERVICE } from './contrains';
+import * as process from 'process';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,11 +32,19 @@ async function bootstrap() {
     }),
   );
 
+  app.enableCors({
+    origin: [process.env.CLIENT_URL],
+    credentials: true,
+  });
+
   app.useGlobalFilters(new NotFoundExceptionFilter());
 
   app.use(cookieParser());
 
+  app.connectMicroservice(app.get(CONFIG_SERVICE).createMicroserviceOption());
+
   const PORT = Number(process.env.PORT) || 3000;
+  await app.startAllMicroservices();
   await app.listen(PORT);
 }
 

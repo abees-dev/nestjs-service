@@ -33,7 +33,7 @@ export class ConversationService {
 
       const conversation = await this.conversationDocument.findOne({
         members: { $eq: [user_id, ...members] },
-        is_deleted: BOOLEAN.FALSE,
+        deleted: BOOLEAN.FALSE,
       });
 
       if (conversation) {
@@ -262,7 +262,7 @@ export class ConversationService {
               $expr: {
                 $ne: ['$last_message', '$last_removed_message'],
               },
-              is_deleted: BOOLEAN.FALSE,
+              deleted: BOOLEAN.FALSE,
             },
           },
         ])

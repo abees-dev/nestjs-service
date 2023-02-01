@@ -15,6 +15,9 @@ import { RedisModule } from './redis/redis.module';
 import { AppGatewayModule } from './app-gateway/app-gateway.module';
 import { CommentModule } from './comment/comment.module';
 import { ReactionModule } from './reaction/reaction.module';
+import { NotificationModule } from './notification/notification.module';
+import { MicroModule } from './microservice/micro.module';
+import { FollowPostModule } from './follow-post/follow-post.module';
 
 @Module({
   imports: [
@@ -26,7 +29,6 @@ import { ReactionModule } from './reaction/reaction.module';
       useFactory: (configService: ConfigService) => configService.createMongooseOptions(),
       inject: [ConfigService],
     }),
-
     ConfigModule,
     DataModule,
     UserModule,
@@ -40,6 +42,9 @@ import { ReactionModule } from './reaction/reaction.module';
     AppGatewayModule,
     CommentModule,
     ReactionModule,
+    NotificationModule,
+    MicroModule,
+    FollowPostModule,
   ],
 })
 export class AppModule {}

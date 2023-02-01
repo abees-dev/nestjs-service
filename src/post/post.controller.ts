@@ -8,11 +8,19 @@ import { PostService } from './post.service';
 import { DeletePostParamsDto } from './dto/deletepost-params.dto';
 import { BaseResponse } from '../response';
 import { PostResponseSwagger } from '../response/post.response';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MESSAGE_PATTERN } from '../enum';
+import { ReactionPostDto } from './dto/reaction-post.dto';
 
 @Controller('post')
 @ApiTags('Post Controller')
 export class PostController {
   constructor(private readonly postService: PostService) {}
+
+  @MessagePattern(MESSAGE_PATTERN.REACTION_POST)
+  async reactionPost(@Payload() payload: ReactionPostDto) {
+    return await this.postService.handlerReactionPost(payload);
+  }
 
   @Get()
   @UseGuards(AuthGuard)

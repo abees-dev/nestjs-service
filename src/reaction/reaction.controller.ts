@@ -1,34 +1,38 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ReactionService } from './reaction.service';
-import { CreateReactionDto } from './dto/create-reaction.dto';
-import { UpdateReactionDto } from './dto/update-reaction.dto';
+import { CreateReactionCommentDto, CreateReactionPostDto } from './dto/create-reaction.dto';
+import { AuthGuard } from '../guards/auth.guard';
+import { IRequest } from '../types/context';
+import { ReactionPostPramDto } from './dto/param-reaction.dto';
+import { QueryReactionDto } from './dto/query-reaction.dto';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MESSAGE_PATTERN } from '../enum';
+import { DetectReactionDto } from './dto/detect-reaction.dto';
 
 @Controller('reaction')
 export class ReactionController {
   constructor(private readonly reactionService: ReactionService) {}
 
-  @Post()
-  create(@Body() createReactionDto: CreateReactionDto) {
-    return this.reactionService.create(createReactionDto);
+  @MessagePattern(MESSAGE_PATTERN.DETECT_REACTION)
+  detectReaction(@Payload() payload: DetectReactionDto) {
+    return this.reactionService.detectReaction(payload);
   }
 
-  @Get()
-  findAll() {
-    return this.reactionService.findAll();
+  @Get(':post_id')
+  @UseGuards(AuthGuard)
+  getListReaction(@Req() req: IRequest, @Param() param: ReactionPostPramDto, @Query() query: QueryReactionDto) {
+    return this.reactionService.getReactionPost(req.user_id, param.post_id, query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reactionService.findOne(+id);
+  @Post('post')
+  @UseGuards(AuthGuard)
+  create(@Req() req: IRequest, @Body() createReactionPostDto: CreateReactionPostDto) {
+    return this.reactionService.createReactionPost(req.user_id, createReactionPostDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReactionDto: UpdateReactionDto) {
-    return this.reactionService.update(+id, updateReactionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reactionService.remove(+id);
+  @Post('comment')
+  @UseGuards(AuthGuard)
+  createComment(@Req() req: IRequest, @Body() createReactionCommentDto: CreateReactionCommentDto) {
+    return this.reactionService.createReactionComment(req.user_id, createReactionCommentDto);
   }
 }

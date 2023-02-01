@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { POST_SCHEMA, PostDocument } from './entities/post.entity';
 import mongoose, { Model } from 'mongoose';
@@ -9,15 +9,22 @@ import { handelPagination } from 'src/utils/util.pagination';
 import { PostResponse } from 'src/response/post.response';
 import { UserResponse } from 'src/response/user.response';
 import { BaseResponse } from 'src/response';
-import { BOOLEAN, VIEW } from 'src/enum';
+import { BOOLEAN, MESSAGE_PATTERN, METHOD, VIEW } from 'src/enum';
 import { isEmpty } from 'lodash';
 import { USER_SCHEMA, UserDocument } from '../user/entities/user.entity';
+import { MICRO_SERVICE } from '../contrains';
+import { Microservice } from '../microservice/micro.service';
+import { ReactionPostDto } from './dto/reaction-post.dto';
+import { reactionArray } from '../enum/reaction';
 
 @Injectable()
 export class PostService {
+  private logger = new Logger(PostService.name);
+
   constructor(
     @InjectModel(POST_SCHEMA) private postModel: Model<PostDocument>,
     @InjectModel(USER_SCHEMA) private userModel: Model<UserDocument>,
+    @Inject(MICRO_SERVICE) private microservice: Microservice,
   ) {}
 
   async createPost(user_id: string, createPostDto: CreatePostDto) {
@@ -55,6 +62,7 @@ export class PostService {
         },
       ]);
 
+      this.microservice.send(MESSAGE_PATTERN.ADD_NEW_FOLLOW_POST, { user_id, post_id: post._id });
       return new BaseResponse({
         data: new PostResponse(postResponse[0]),
       });
@@ -118,9 +126,22 @@ export class PostService {
           },
           {
             $lookup: {
+              from: 'reactions',
+              localField: '_id',
+              foreignField: 'object_id',
+              as: 'reactions',
+              pipeline: [
+                {
+                  $match: { user_id: new mongoose.Types.ObjectId(user_id) },
+                },
+              ],
+            },
+          },
+          {
+            $lookup: {
               from: 'comments',
               localField: '_id',
-              foreignField: 'post_id',
+              foreignField: 'object_id',
               as: 'comments',
               pipeline: [
                 {
@@ -129,9 +150,7 @@ export class PostService {
               ],
             },
           },
-          {
-            $unwind: '$user',
-          },
+          { $unwind: '$user' },
           {
             $match: {
               $or: [
@@ -146,6 +165,7 @@ export class PostService {
           {
             $addFields: {
               no_of_comment: { $size: '$comments' },
+              my_reaction: { $arrayElemAt: ['$reactions.type', 0] },
             },
           },
         ])
@@ -198,6 +218,24 @@ export class PostService {
       return new BaseResponse({ message: 'Update post successfully' });
     } catch (error) {
       throw new CatchError(error);
+    }
+  }
+
+  async handlerReactionPost(payload: ReactionPostDto) {
+    try {
+      const { method, post_id, type } = payload;
+      const existPost = await this.postModel.findOne({ _id: post_id, deleted: BOOLEAN.FALSE });
+      if (!existPost) throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'Post not found');
+
+      const reactionType = reactionArray[type];
+
+      if (payload?.old_type) {
+        const oldReactionType = reactionArray[payload.old_type];
+        await this.postModel.findByIdAndUpdate(post_id, { $inc: { [oldReactionType]: -1 } });
+      }
+      await this.postModel.findByIdAndUpdate(post_id, { $inc: { [reactionType]: method === METHOD.ADD ? 1 : -1 } });
+    } catch (e) {
+      this.logger.error(e);
     }
   }
 }

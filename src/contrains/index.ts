@@ -1,6 +1,8 @@
 export const AUTH_SERVICE = 'AUTH_SERVICE';
 export const REDIS_MODULE = 'REDIS_MODULE';
 export const REDIS_SERVICE = 'REDIS_SERVICE';
+export const CONFIG_SERVICE = 'CONFIG_SERVICE';
+export const MICRO_SERVICE = 'MICRO_SERVICE';
 export const REDIS_CONNECTION = 'redis_connection';
 export const COOKIE_KEY = 'refresh_token';
 export const REFRESH_TOKEN_STRATEGY = 'refresh';

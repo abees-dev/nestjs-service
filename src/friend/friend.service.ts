@@ -1,13 +1,17 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FRIEND_SCHEMA, FriendDocument } from './entities/friend.entity';
 import { Model } from 'mongoose';
 import { FOLLOW_USER_SCHEMA, FollowUserDocument } from '../follow-user/entities/follow-user.entity';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
-import { BOOLEAN, CONTACT_TYPE } from '../enum';
+import { BOOLEAN, CONTACT_TYPE, MESSAGE_PATTERN, NOTIFICATION_TYPE } from '../enum';
 import { BaseResponse } from '../response';
 import { FriendResponse } from '../response/friend.response';
 import { USER_SCHEMA, UserDocument } from '../user/entities/user.entity';
+import { MICRO_SERVICE } from '../contrains';
+import { Microservice } from '../microservice/micro.service';
+import { PayloadNotificationDto } from '../notification/dto/payload-notification.dto';
+import { use } from 'passport';
 
 @Injectable()
 export class FriendService {
@@ -15,30 +19,8 @@ export class FriendService {
     @InjectModel(FRIEND_SCHEMA) private friendDocument: Model<FriendDocument>,
     @InjectModel(FOLLOW_USER_SCHEMA) private followUserDocumentDocument: Model<FollowUserDocument>,
     @InjectModel(USER_SCHEMA) private userDocumentModel: Model<UserDocument>,
+    @Inject(MICRO_SERVICE) private microservice: Microservice,
   ) {}
-
-  async handleAddFollow(user_id: string, target_id: string) {
-    const existsFollow = await this.followUserDocumentDocument.findOne({
-      user_id: target_id,
-      follower_id: user_id,
-    });
-
-    if (!existsFollow) {
-      const newFollow = new this.followUserDocumentDocument({
-        user_id: target_id,
-        follower_id: user_id,
-      });
-
-      await newFollow.save();
-
-      await this.userDocumentModel.findByIdAndUpdate(target_id, { $inc: { no_of_followers: 1 } });
-    }
-  }
-
-  async handleUpdateNoOfFriends(user_id: string, target_id: string) {
-    await this.userDocumentModel.findByIdAndUpdate(user_id, { $inc: { no_of_friends: 1 } });
-    await this.userDocumentModel.findByIdAndUpdate(target_id, { $inc: { no_of_friends: 1 } });
-  }
 
   async addFriend(user_id: string, target_id: string) {
     try {
@@ -56,7 +38,19 @@ export class FriendService {
 
         await newFriend.save();
 
-        await this.handleAddFollow(user_id, target_id);
+        this.microservice.send(MESSAGE_PATTERN.ADD_NEW_FOLLOWER, { user_id, target_id });
+
+        const user = await this.userDocumentModel.findById(user_id);
+
+        this.microservice.send<PayloadNotificationDto>(MESSAGE_PATTERN.NOTIFY_PRIORITY_HANDLER, {
+          user_id,
+          notification_type: NOTIFICATION_TYPE.SEND_FRIEND,
+          avatar: user.avatar,
+          object_id: target_id,
+          title: 'Add friend',
+          content: 'đã gửi lời mới kết bạn đến bạn',
+          name: user.full_name,
+        });
 
         return new BaseResponse({ message: 'Add friend successfully' });
       }
@@ -96,6 +90,7 @@ export class FriendService {
       await this.friendDocument.deleteOne({
         _id: existsFriend._id,
       });
+      this.microservice.send(MESSAGE_PATTERN.UPDATE_NO_OF_FRIEND, { user_id, target_id, method: 0 });
 
       return new BaseResponse({ message: 'Remove friend successfully' });
     } catch (error) {
@@ -138,8 +133,19 @@ export class FriendService {
 
       await this.friendDocument.findByIdAndUpdate(exitFriend._id, { status: BOOLEAN.TRUE });
 
-      await this.handleAddFollow(user_id, target_id);
-      await this.handleUpdateNoOfFriends(user_id, target_id);
+      this.microservice.send(MESSAGE_PATTERN.ADD_NEW_FOLLOWER, { user_id, target_id });
+      this.microservice.send(MESSAGE_PATTERN.UPDATE_NO_OF_FRIEND, { user_id, target_id, method: 1 });
+      const user = await this.userDocumentModel.findById(user_id);
+
+      this.microservice.send<PayloadNotificationDto>(MESSAGE_PATTERN.NOTIFY_PRIORITY_HANDLER, {
+        user_id,
+        notification_type: NOTIFICATION_TYPE.ACCEPT_FRIEND,
+        avatar: user.avatar,
+        object_id: target_id,
+        title: 'accept friend',
+        content: 'đã chấp nhận lời mới kết bạn của bạn',
+        name: user.full_name,
+      });
       return new BaseResponse({ message: 'Accept request successfully' });
     } catch (error) {
       throw new CatchError(error);

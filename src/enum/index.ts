@@ -3,6 +3,11 @@ export enum BOOLEAN {
   FALSE = 0,
 }
 
+export enum METHOD {
+  ADD = 1,
+  REMOVE = 0,
+}
+
 export enum CONTACT_TYPE {
   NONE = 0,
   FRIEND = 1,
@@ -39,6 +44,18 @@ export enum SOCKET_MESSAGE {
   MESSAGE_STICKER = 'message_sticker',
 }
 
+export enum MESSAGE_PATTERN {
+  NOTIFY_PRIORITY_HANDLER = 'notify-priority-handler',
+  ADD_NEW_FOLLOWER = 'add-new-follower',
+  REMOVE_FOLLOWER = 'remove-follower',
+  ADD_NEW_FOLLOW_POST = 'add-new-follow-post',
+  UPDATE_NO_OF_FOLLOWER = 'update-no-of-follower',
+  UPDATE_NO_OF_FRIEND = 'update-no-of-friend',
+  REACTION_POST = 'reaction-post',
+  REACTION_COMMENT = 'reaction-comment',
+  DETECT_REACTION = 'detect-reaction',
+}
+
 export enum MESSAGE_TYPE {
   TEXT = 0,
   IMAGE = 1,
@@ -58,6 +75,15 @@ export enum MESSAGE_TYPE {
   NEW_GROUP = 15,
   REVOKE = 16,
   REPLY = 17,
+}
+
+export enum NOTIFICATION_TYPE {
+  NEW_MESSAGE = 0,
+  SEND_FRIEND = 1,
+  ACCEPT_FRIEND = 2,
+  COMMENT_POST = 3,
+  REACTION_POST = 4,
+  REACTION_COMMENT = 5,
 }
 
 // 0: public, 1: private (only friends), 2: only me

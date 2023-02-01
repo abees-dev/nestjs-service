@@ -11,7 +11,7 @@ import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { UserDetailResponse } from '../response/userDetail.response';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { IRequest } from '../types/context';
 import * as process from 'process';
 import { STRATEGY } from '../enum/strategy';

@@ -22,7 +22,7 @@ export class ConversationMember {
   status: number; // 1: active, 0: inactive
 
   @Prop({ type: Number, default: 0 })
-  is_deleted: boolean;
+  deleted: boolean;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId,default: new mongoose.Types.ObjectId() })
   last_seen_message: string;
