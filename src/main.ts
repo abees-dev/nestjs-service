@@ -15,6 +15,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .addBearerAuth()
+
     .setTitle('NestJS Social API')
     .setDescription('The Social API description')
     .setVersion('1.0')
