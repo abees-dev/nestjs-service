@@ -186,7 +186,7 @@ export class AuthService {
       const userResponse = await this.userService.getProfile(exitUser._id.toString());
 
       this.setCooKie(res, refreshToken);
-      return new BaseResponse({ data: { access_token: accessToken, user: userResponse } });
+      return new BaseResponse({ data: { access_token: accessToken, user: userResponse.data } });
     } catch (e) {
       throw new CatchError(e);
     }
