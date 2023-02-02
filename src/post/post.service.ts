@@ -141,7 +141,7 @@ export class PostService {
             $lookup: {
               from: 'comments',
               localField: '_id',
-              foreignField: 'object_id',
+              foreignField: 'post_id',
               as: 'comments',
               pipeline: [
                 {
@@ -156,7 +156,7 @@ export class PostService {
               $or: [
                 { $and: [{ view: { $in: [0, 1] } }, { 'friendship.0': { $exists: true } }] },
                 { $and: [{ view: 0 }, { 'friendship.0': { $exists: false } }] },
-                { $and: [{ user: { $ne: new mongoose.Types.ObjectId(user_id) } }, { view: 0 }] },
+                { $and: [{ 'user._id': new mongoose.Types.ObjectId(user_id) }, { view: { $in: [0, 1, 2] } }] },
               ],
               ...(Number(query?.position) && { createdAt: { $lt: new Date(Number(query.position)) } }),
               deleted: BOOLEAN.FALSE,
@@ -233,7 +233,8 @@ export class PostService {
         const oldReactionType = reactionArray[payload.old_type];
         await this.postModel.findByIdAndUpdate(post_id, { $inc: { [oldReactionType]: -1 } });
       }
-      await this.postModel.findByIdAndUpdate(post_id, { $inc: { [reactionType]: method === METHOD.ADD ? 1 : -1 } });
+      const inc = method === METHOD.ADD ? 1 : -1;
+      await this.postModel.findByIdAndUpdate(post_id, { $inc: { [reactionType]: inc, no_of_reaction: inc } });
     } catch (e) {
       this.logger.error(e);
     }
