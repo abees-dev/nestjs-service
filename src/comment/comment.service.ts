@@ -14,6 +14,7 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { MICRO_SERVICE } from '../contrains';
 import { Microservice } from '../microservice/micro.service';
 import { PayloadNotificationDto } from '../notification/dto/payload-notification.dto';
+import { orderQuery } from 'src/utils/util.order.query';
 
 @Injectable()
 export class CommentService {
@@ -86,6 +87,8 @@ export class CommentService {
       const { limit, comment_id } = queryCommentDto;
       const limitOfNumber = Number(limit) || 10;
 
+      const order = queryCommentDto?.order || 'desc';
+
       const comments = await this.commentDocument
         .aggregate([
           {
@@ -135,12 +138,12 @@ export class CommentService {
           {
             $match: {
               ...(Number(queryCommentDto?.position) && {
-                createdAt: { $lt: new Date(Number(queryCommentDto.position)) },
+                createdAt: orderQuery(order, queryCommentDto.position),
               }),
             },
           },
         ])
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: order })
         .limit(limitOfNumber);
 
       return new BaseResponse({
