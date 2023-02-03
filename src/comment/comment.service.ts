@@ -59,7 +59,9 @@ export class CommentService {
         {
           $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' },
         },
+        { $lookup: { from: 'uploads', localField: 'media', foreignField: '_id', as: 'media' } },
         { $unwind: '$user' },
+        { $unwind: { path: '$media', preserveNullAndEmptyArrays: true } },
       ]);
 
       this.microservice.send<PayloadNotificationDto>(MESSAGE_PATTERN.NOTIFY_PRIORITY_HANDLER, {
@@ -71,8 +73,12 @@ export class CommentService {
         content: 'Đã comment bài viết của bạn',
         name: commentResponse[0].user.full_name,
       });
+
       return new BaseResponse({
-        data: commentResponse[0],
+        data: new CommentResponse({
+          ...commentResponse[0],
+          media: commentResponse[0].media,
+        }),
       });
     } catch (e) {
       throw new CatchError(e);
