@@ -105,8 +105,7 @@ export class ReactionService {
         .aggregate([
           { $match: { object_id: new mongoose.Types.ObjectId(post_id) } },
           { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
-          { $unwind: { path: '$user', preserveNullAndEmptyArrays: false } },
-          { $unwind: '$post' },
+          { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
           {
             $match: {
               ...(Number(query?.type) && { type: Number(query?.type) }),
