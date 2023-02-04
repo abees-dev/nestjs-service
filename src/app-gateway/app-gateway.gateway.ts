@@ -1,15 +1,20 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  MessageBody,
+  WebSocketServer,
+  OnGatewayConnection,
+} from '@nestjs/websockets';
 import { AppGatewayService } from './app-gateway.service';
 import { Server, Socket } from 'socket.io';
 import { HttpStatus, Logger } from '@nestjs/common';
 import { MESSAGE_TYPE, SOCKET_MESSAGE } from '../enum';
 import { SocketRoomDto } from './dto/socket-room.dto';
-import { CreateMessageDto } from '../message/dto/create-message.dto';
 import { MessageDto } from './dto/create-app-gateway.dto';
 import { BaseResponse } from '../response';
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class AppGatewayGateway {
+export class AppGatewayGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server: Server;
 

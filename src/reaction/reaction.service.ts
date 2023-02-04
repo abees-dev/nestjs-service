@@ -103,7 +103,14 @@ export class ReactionService {
 
       const listReaction = await this.reactionModel
         .aggregate([
-          { $match: { object_id: new mongoose.Types.ObjectId(post_id) } },
+          {
+            $match: {
+              object_id: new mongoose.Types.ObjectId(post_id),
+              ...(Number(query.type) && {
+                type: Number(query.type),
+              }),
+            },
+          },
           { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
           { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
           {
