@@ -20,11 +20,11 @@ export class NotificationController {
   @MessagePattern(MESSAGE_PATTERN.NOTIFY_PRIORITY_HANDLER)
   async notifyHandler(@Payload() payload: PayloadNotificationDto) {
     switch (payload.notification_type) {
-      case NOTIFICATION_TYPE.ACCEPT_FRIEND | NOTIFICATION_TYPE.SEND_FRIEND:
+      case NOTIFICATION_TYPE.ACCEPT_FRIEND:
         return await this.notificationService.notifyHandlerSingle(payload);
       case NOTIFICATION_TYPE.SEND_FRIEND:
         return await this.notificationService.notifyHandlerSingle(payload);
-      case NOTIFICATION_TYPE.COMMENT_POST | NOTIFICATION_TYPE.REACTION_POST:
+      case NOTIFICATION_TYPE.COMMENT_POST:
         return await this.notificationService.notifyHandlerCommentPost(payload);
       case NOTIFICATION_TYPE.REACTION_POST:
         return await this.notificationService.notifyHandlerCommentPost(payload);

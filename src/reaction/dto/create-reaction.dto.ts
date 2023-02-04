@@ -11,7 +11,7 @@ export class CreateReactionDto {
   object_id: string;
 
   @ApiProperty({
-    description: '0: like, 1: love, 2: haha, 3: wow, 4: sad, 5: angry, 6: dear',
+    description: '1: like, 2: love, 3: haha, 4: wow, 5: sad, 6: angry,7: dear',
     example: 1,
     //
   })
@@ -28,7 +28,7 @@ export class CreateReactionPostDto {
   post_id: string;
 
   @ApiProperty({
-    description: '0: like, 1: love, 2: haha, 3: wow, 4: sad, 5: angry, 6: dear',
+    description: '1: like, 2: love, 3: haha, 4: wow, 5: sad, 6: angry,7: dear',
     example: 1,
     //
   })

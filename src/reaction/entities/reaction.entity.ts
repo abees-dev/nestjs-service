@@ -25,7 +25,7 @@ export class Reaction {
     type: Number,
     default: 0,
   })
-  type: number; // 0: like, 1: love, 2: haha, 3: wow, 4: sad, 5: angry, 6: dear
+  type: number; // 1: like, 2: love, 3: haha, 4: wow, 5: sad, 6: angry, 7: care
 
   @Prop({
     type: Number,

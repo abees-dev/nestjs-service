@@ -232,6 +232,7 @@ export class PostService {
       if (payload?.old_type) {
         const oldReactionType = reactionArray[payload.old_type];
         await this.postModel.findByIdAndUpdate(post_id, { $inc: { [oldReactionType]: -1 } });
+        return;
       }
       const inc = method === METHOD.ADD ? 1 : -1;
       await this.postModel.findByIdAndUpdate(post_id, { $inc: { [reactionType]: inc, no_of_reaction: inc } });
