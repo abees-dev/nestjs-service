@@ -227,10 +227,10 @@ export class PostService {
       const existPost = await this.postModel.findOne({ _id: post_id, deleted: BOOLEAN.FALSE });
       if (!existPost) throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'Post not found');
 
-      const reactionType = reactionArray[type];
+      const reactionType = reactionArray[type + 1];
 
       if (payload?.old_type) {
-        const oldReactionType = reactionArray[payload.old_type];
+        const oldReactionType = reactionArray[payload.old_type + 1];
         await this.postModel.findByIdAndUpdate(post_id, { $inc: { [oldReactionType]: -1 } });
         return;
       }

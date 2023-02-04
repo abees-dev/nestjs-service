@@ -9,11 +9,11 @@ export const reactionArray = [
 ];
 
 export enum REACTION_TYPE {
-  LIKE = 0,
-  LOVE = 1,
-  HAHA = 2,
-  WOW = 3,
-  SAD = 4,
-  ANGRY = 5,
-  DEAR = 6,
+  LIKE = 1,
+  LOVE = 2,
+  HAHA = 3,
+  WOW = 4,
+  SAD = 5,
+  ANGRY = 6,
+  DEAR = 7,
 }
