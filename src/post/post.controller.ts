@@ -27,7 +27,7 @@ export class PostController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   async getFeeling(@Query() query: FeelingQueryDto) {
-    return await this.postService.getFeeling(query.search);
+    return await this.postService.getFeeling(query);
   }
 
   @Get()

@@ -17,6 +17,8 @@ import { reactionArray } from '../enum/reaction';
 import { FEELING_SCHEMA, FeelingDocument } from './entities/feeling.entity';
 import { Format } from '../utils/utils.format';
 import { FeelingResponse } from '../response/feeling.response';
+import { FeelingQueryDto } from './dto/feeling-query.dto';
+import { orderQuery } from 'src/utils/util.order.query';
 
 @Injectable()
 export class PostService {
@@ -29,15 +31,29 @@ export class PostService {
     @Inject(MICRO_SERVICE) private microservice: Microservice,
   ) {}
 
-  async getFeeling(search?: string) {
-    const feeling = (await this.feelingModel.find({
-      ...(search && {
-        search: {
-          $regex: `.*${Format.searchString(search)}.*`,
-          $options: 'i',
+  async getFeeling(query: FeelingQueryDto) {
+    const order = query?.order || 'asc';
+    const limit = Number(query.limit) || 10;
+    const feeling = await this.feelingModel
+      .aggregate([
+        {
+          $match: {
+            ...(query?.search && {
+              search: {
+                $regex: `.*${Format.searchString(query?.search)}.*`,
+                $options: 'i',
+              },
+            }),
+            ...(Number(query?.position) && {
+              createdAt: orderQuery(order, query.position),
+            }),
+          },
         },
-      }),
-    })) as FeelingResponse[];
+      ])
+      .sort({
+        createdAt: order,
+      })
+      .limit(limit);
     return new BaseResponse({ data: FeelingResponse.mapList(feeling) });
   }
 

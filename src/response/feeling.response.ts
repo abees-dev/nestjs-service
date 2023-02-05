@@ -4,6 +4,8 @@ export class FeelingResponse {
   name: string;
   search: string;
   _id: string;
+  position: number;
+  createdAt: string;
 
   constructor(feeling: FeelingResponse) {
     this._id = feeling?._id ?? '';
@@ -11,6 +13,8 @@ export class FeelingResponse {
     this.icon = feeling?.icon ?? '';
     this.name = feeling?.name ?? '';
     this.search = feeling?.search ?? '';
+    this.position = feeling?.createdAt ? new Date(feeling.createdAt).getTime() : 0;
+    this.createdAt = feeling?.createdAt ?? null;
   }
 
   static mapList(feelings: FeelingResponse[]): FeelingResponse[] {
