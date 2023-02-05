@@ -227,14 +227,26 @@ export class FriendService {
       const numberLimit = Number(query?.limit) || 10;
 
       const requestFriend = await this.friendDocument
-        .find({
-          sender_id: user_id,
-          status: BOOLEAN.FALSE,
-          ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
-        })
-        .populate('receiver_id', '-password')
-        .limit(numberLimit)
-        .sort({ createdAt: -1 });
+        .aggregate([
+          {
+            $match: {
+              sender_id: new mongoose.Types.ObjectId(user_id),
+              status: BOOLEAN.FALSE,
+              ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
+            },
+          },
+          {
+            $lookup: { from: 'users', localField: 'receiver_id', foreignField: '_id', as: 'user' },
+          },
+          {
+            $unwind: {
+              path: '$user',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ])
+        .sort({ createdAt: -1 })
+        .limit(numberLimit);
 
       if (!requestFriend) {
         return new BaseResponse({ data: [] });
@@ -244,7 +256,7 @@ export class FriendService {
         return new FriendResponse({
           ...item,
           contact_type: CONTACT_TYPE.REQUEST,
-          user_id: item.receiver_id._id,
+          user: item.user,
         });
       });
       return new BaseResponse({ data: mapList });
@@ -257,23 +269,36 @@ export class FriendService {
     try {
       const numberLimit = Number(query?.limit) || 10;
       const requestFriend = await this.friendDocument
-        .find({
-          receiver_id: user_id,
-          status: BOOLEAN.FALSE,
-          ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
-        })
+        .aggregate([
+          {
+            $match: {
+              sender_id: new mongoose.Types.ObjectId(user_id),
+              status: BOOLEAN.FALSE,
+              ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
+            },
+          },
+          {
+            $lookup: { from: 'users', localField: 'receiver_id', foreignField: '_id', as: 'user' },
+          },
+          {
+            $unwind: {
+              path: '$user',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ])
         .sort({ createdAt: -1 })
-        .limit(numberLimit)
-        .populate('sender_id', '-password');
+        .limit(numberLimit);
+
       if (!requestFriend) {
         return new BaseResponse({ data: [] });
       }
       const mapList = requestFriend.map((item: any) => {
-        return {
+        return new FriendResponse({
           ...item,
-          contact_type: CONTACT_TYPE.PENDING,
-          user: item.sender_id,
-        };
+          contact_type: CONTACT_TYPE.REQUEST,
+          user: item.user,
+        });
       });
       return new BaseResponse({ data: mapList });
     } catch (error) {

@@ -8,7 +8,7 @@ export class FriendResponse {
   position: number;
   contact_type: number;
 
-  constructor(data: Partial<FriendResponse>) {
+  constructor(data: FriendResponse) {
     this._id = data?._id ?? '';
     this.position = data?.createdAt ? new Date(data.createdAt).getTime() : 0;
     this.createdAt = data?.createdAt ?? null;
@@ -17,7 +17,7 @@ export class FriendResponse {
     this.contact_type = data?.contact_type ?? 0;
   }
 
-  static mapList(data: Partial<FriendResponse>[]) {
+  static mapList(data: FriendResponse[]) {
     return data.map((item) => new FriendResponse(item));
   }
 }
