@@ -1,6 +1,6 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-import { IsObjectId } from '../../decorator/vaidator';
+import { IsObjectId, IsObjectIdOptional } from '../../decorator/vaidator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePostDto {
@@ -67,4 +67,18 @@ export class CreatePostDto {
   @IsOptional()
   @IsNumber()
   view: number;
+
+  @ApiProperty({
+    description: 'Feeling',
+    example: 0,
+  })
+  @IsObjectIdOptional()
+  feeling_id: string;
+
+  @ApiProperty({
+    description: 'Feeling',
+    example: 0,
+  })
+  @IsObjectIdOptional()
+  parent_id: string;
 }

@@ -1,13 +1,11 @@
-import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { POST_SCHEMA, PostDocument } from './entities/post.entity';
 import mongoose, { Model } from 'mongoose';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
 import { GetPostQuery } from './dto/query.dto';
-import { handelPagination } from 'src/utils/util.pagination';
 import { PostResponse } from 'src/response/post.response';
-import { UserResponse } from 'src/response/user.response';
 import { BaseResponse } from 'src/response';
 import { BOOLEAN, MESSAGE_PATTERN, METHOD, VIEW } from 'src/enum';
 import { isEmpty } from 'lodash';
@@ -16,6 +14,9 @@ import { MICRO_SERVICE } from '../contrains';
 import { Microservice } from '../microservice/micro.service';
 import { ReactionPostDto } from './dto/reaction-post.dto';
 import { reactionArray } from '../enum/reaction';
+import { FEELING_SCHEMA, FeelingDocument } from './entities/feeling.entity';
+import { Format } from '../utils/utils.format';
+import { FeelingResponse } from '../response/feeling.response';
 
 @Injectable()
 export class PostService {
@@ -24,8 +25,21 @@ export class PostService {
   constructor(
     @InjectModel(POST_SCHEMA) private postModel: Model<PostDocument>,
     @InjectModel(USER_SCHEMA) private userModel: Model<UserDocument>,
+    @InjectModel(FEELING_SCHEMA) private feelingModel: Model<FeelingDocument>,
     @Inject(MICRO_SERVICE) private microservice: Microservice,
   ) {}
+
+  async getFeeling(search?: string) {
+    const feeling = (await this.feelingModel.find({
+      ...(search && {
+        search: {
+          $regex: `.*${Format.searchString(search)}.*`,
+          $options: 'i',
+        },
+      }),
+    })) as FeelingResponse[];
+    return new BaseResponse({ data: FeelingResponse.mapList(feeling) });
+  }
 
   async createPost(user_id: string, createPostDto: CreatePostDto) {
     try {
@@ -58,7 +72,13 @@ export class PostService {
           $lookup: { from: 'uploads', localField: 'medias', foreignField: '_id', as: 'medias' },
         },
         {
-          $unwind: '$user',
+          $lookup: { from: 'feelings', localField: 'feeling_id', foreignField: '_id', as: 'feeling' },
+        },
+        {
+          $unwind: { path: '$user', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $unwind: { path: '$feeling', preserveNullAndEmptyArrays: true },
         },
       ]);
 
@@ -150,7 +170,13 @@ export class PostService {
               ],
             },
           },
+          {
+            $lookup: { from: 'feelings', localField: 'feeling_id', foreignField: '_id', as: 'feeling' },
+          },
           { $unwind: '$user' },
+          {
+            $unwind: { path: '$feeling', preserveNullAndEmptyArrays: true },
+          },
           {
             $match: {
               $or: [

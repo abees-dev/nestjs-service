@@ -11,6 +11,7 @@ import { PostResponseSwagger } from '../response/post.response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { MESSAGE_PATTERN } from '../enum';
 import { ReactionPostDto } from './dto/reaction-post.dto';
+import { FeelingQueryDto } from './dto/feeling-query.dto';
 
 @Controller('post')
 @ApiTags('Post Controller')
@@ -20,6 +21,13 @@ export class PostController {
   @MessagePattern(MESSAGE_PATTERN.REACTION_POST)
   async reactionPost(@Payload() payload: ReactionPostDto) {
     return await this.postService.handlerReactionPost(payload);
+  }
+
+  @Get('feeling')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  async getFeeling(@Query() query: FeelingQueryDto) {
+    return await this.postService.getFeeling(query.search);
   }
 
   @Get()

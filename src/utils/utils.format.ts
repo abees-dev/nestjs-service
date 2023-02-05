@@ -12,7 +12,8 @@ export class Format {
       .replace(/Đ/g, 'D');
   }
 
-  static searchString(value: string) {
+  static searchString(value?: string) {
+    if (!value) return '';
     return this.normalizedString(value).replace(/[^a-zA-Z0-9 ]/g, '');
   }
 

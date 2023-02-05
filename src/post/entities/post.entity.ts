@@ -117,6 +117,16 @@ export class Post {
     default: 0,
   })
   deleted: number;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+  })
+  feeling_id: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+  })
+  parent_id: string;
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

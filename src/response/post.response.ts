@@ -3,6 +3,7 @@ import { MediaResponse } from './media.response';
 import { UserResponse } from './user.response';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponse } from './index';
+import { FeelingResponse } from './feeling.response';
 
 export class PostResponse {
   @ApiProperty({
@@ -130,6 +131,7 @@ export class PostResponse {
 
   my_reaction: number;
 
+  feeling: FeelingResponse;
 
   constructor(post: Partial<PostResponse>) {
     this._id = post?._id ?? '';
@@ -156,7 +158,7 @@ export class PostResponse {
     this.createdAt = post?.createdAt ?? null;
     this.updatedAt = post?.updatedAt ?? null;
     this.my_reaction = post?.my_reaction ?? 0;
-
+    this.feeling = post?.feeling ? new FeelingResponse(post.feeling) : null;
   }
 
   static mapList(posts: Partial<PostResponse>[]): PostResponse[] {
