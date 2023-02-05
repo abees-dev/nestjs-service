@@ -68,6 +68,8 @@ export class UserResponse {
   })
   role: number;
 
+  contact_type: number;
+
   constructor(user: Partial<UserResponse>) {
     this._id = user?._id ?? null;
     this.email = user?.email ?? '';
@@ -80,6 +82,7 @@ export class UserResponse {
     this.birthday = user?.birthday ?? null;
     this.no_of_followers = user?.no_of_followers ?? 0;
     this.no_of_friends = user?.no_of_friends ?? 0;
+    this.contact_type = user?.contact_type ?? 0;
   }
 
   static mapList(user: Partial<UserResponse[]>) {

@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { AddFriendDto } from './dto/prams.dto';
@@ -6,11 +6,19 @@ import { IRequest } from '../types/context';
 import { Response } from 'express';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BaseResponse } from '../response';
+import { GetSuggestionsQuery } from './dto/query.friend.dto';
 
 @Controller('friend')
 @ApiTags('Friend Controller')
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
+
+  @Get('suggest')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  async getSuggestFriend(@Req() req: IRequest, @Query() query: GetSuggestionsQuery) {
+    return await this.friendService.getSuggestFriend(req.user_id, query);
+  }
 
   @Get(':id')
   @UseGuards(AuthGuard)
@@ -25,8 +33,8 @@ export class FriendController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   // @ApiResponse({})
-  async getFriendRequest(@Req() req: IRequest, @Res() res: Response) {
-    const data = await this.friendService.getFriendRequest(req.user_id);
+  async getFriendRequest(@Req() req: IRequest, @Res() res: Response, @Query() query: GetSuggestionsQuery) {
+    const data = await this.friendService.getFriendRequest(req.user_id, query);
     return res.status(HttpStatus.OK).json(data);
   }
 

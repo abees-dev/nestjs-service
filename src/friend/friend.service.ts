@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FRIEND_SCHEMA, FriendDocument } from './entities/friend.entity';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { FOLLOW_USER_SCHEMA, FollowUserDocument } from '../follow-user/entities/follow-user.entity';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
 import { BOOLEAN, CONTACT_TYPE, MESSAGE_PATTERN, NOTIFICATION_TYPE } from '../enum';
@@ -11,7 +11,9 @@ import { USER_SCHEMA, UserDocument } from '../user/entities/user.entity';
 import { MICRO_SERVICE } from '../contrains';
 import { Microservice } from '../microservice/micro.service';
 import { PayloadNotificationDto } from '../notification/dto/payload-notification.dto';
-import { use } from 'passport';
+import { UserResponse } from '../response/user.response';
+import { GetSuggestionsQuery } from './dto/query.friend.dto';
+import { orderQuery } from '../utils/util.order.query';
 
 @Injectable()
 export class FriendService {
@@ -171,29 +173,45 @@ export class FriendService {
 
   async getFriend(user_id: string, target_id: string) {
     try {
-      console.log(target_id);
-      const existsFriend = await this.friendDocument
-        .find({ $or: [{ receiver_id: target_id }, { sender_id: target_id }], status: BOOLEAN.TRUE })
-        .populate({ path: 'sender_id', select: '-password', match: { _id: { $ne: target_id } } })
-        .populate({ path: 'receiver_id', select: '-password', match: { _id: { $ne: target_id } } })
-        .exec();
-
-      if (!existsFriend) {
-        return new BaseResponse({ data: [] });
-      }
-
-      const data = existsFriend.map((item: any) => ({
-        ...new FriendResponse(item.sender_id ? item.sender_id : item.receiver_id),
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-      }));
-
+      const existsFriend = await this.friendDocument.aggregate([
+        {
+          $match: {
+            $and: [
+              {
+                $or: [
+                  { receiver_id: new mongoose.Types.ObjectId(target_id) },
+                  { sender_id: new mongoose.Types.ObjectId(target_id) },
+                ],
+              },
+              { status: BOOLEAN.TRUE },
+            ],
+          },
+        },
+        {
+          $addFields: {
+            user_id: {
+              $cond: {
+                if: { $eq: ['$sender_id', new mongoose.Types.ObjectId(target_id)] },
+                then: '$receiver_id',
+                else: '$sender_id',
+              },
+            },
+          },
+        },
+        {
+          $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' },
+        },
+        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      ]);
       const mapList = await Promise.all(
-        data.map(async (item) => {
-          const type = await this.getContactType(user_id, item._id);
+        existsFriend.map(async (item) => {
+          const { type } = await this.contactType(user_id, item.user._id);
           return {
-            ...item,
-            type: type.type,
+            ...new FriendResponse({
+              ...item,
+              user: item.user,
+            }),
+            contact_type: type,
           };
         }),
       );
@@ -204,61 +222,30 @@ export class FriendService {
     }
   }
 
-  async getContactType(user_id: string, target_id: string) {
+  async getFriendRequest(user_id: string, query: GetSuggestionsQuery) {
     try {
-      const existsFriend = await this.friendDocument.findOne({
-        $or: [
-          { sender_id: user_id, receiver_id: target_id },
-          { sender_id: target_id, receiver_id: user_id },
-        ],
-      });
+      const numberLimit = Number(query?.limit) || 10;
 
-      if (!existsFriend) {
-        return {
-          type: CONTACT_TYPE.NONE,
-        };
-      }
-
-      if (existsFriend.status === BOOLEAN.TRUE) {
-        return {
-          type: CONTACT_TYPE.FRIEND,
-        };
-      }
-
-      if (existsFriend.sender_id.toString() === user_id) {
-        return {
-          type: CONTACT_TYPE.REQUEST,
-        };
-      }
-
-      if (existsFriend.receiver_id.toString() === user_id) {
-        return {
-          type: CONTACT_TYPE.PENDING,
-        };
-      }
-    } catch (error) {
-      throw new CatchError(error);
-    }
-  }
-
-  async getFriendRequest(user_id: string) {
-    try {
       const requestFriend = await this.friendDocument
         .find({
           sender_id: user_id,
           status: BOOLEAN.FALSE,
+          ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
         })
-        .populate('receiver_id', '-password');
+        .populate('receiver_id', '-password')
+        .limit(numberLimit)
+        .sort({ createdAt: -1 });
 
       if (!requestFriend) {
         return new BaseResponse({ data: [] });
       }
 
       const mapList = requestFriend.map((item: any) => {
-        return {
-          ...new FriendResponse(item.receiver_id),
-          type: CONTACT_TYPE.REQUEST,
-        };
+        return new FriendResponse({
+          ...item,
+          contact_type: CONTACT_TYPE.REQUEST,
+          user_id: item.receiver_id._id,
+        });
       });
       return new BaseResponse({ data: mapList });
     } catch (error) {
@@ -266,26 +253,107 @@ export class FriendService {
     }
   }
 
-  async getFriendReceive(user_id: string) {
+  async getFriendReceive(user_id: string, query?: GetSuggestionsQuery) {
     try {
+      const numberLimit = Number(query?.limit) || 10;
       const requestFriend = await this.friendDocument
         .find({
           receiver_id: user_id,
           status: BOOLEAN.FALSE,
+          ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
         })
+        .sort({ createdAt: -1 })
+        .limit(numberLimit)
         .populate('sender_id', '-password');
       if (!requestFriend) {
         return new BaseResponse({ data: [] });
       }
       const mapList = requestFriend.map((item: any) => {
         return {
-          ...new FriendResponse(item.sender_id),
-          type: CONTACT_TYPE.PENDING,
+          ...item,
+          contact_type: CONTACT_TYPE.PENDING,
+          user: item.sender_id,
         };
       });
       return new BaseResponse({ data: mapList });
     } catch (error) {
       throw new CatchError(error);
+    }
+  }
+
+  async getSuggestFriend(user_id: string, query: GetSuggestionsQuery) {
+    try {
+      const numberOfLimit = Number(query.limit) || 10;
+
+      const suggestFriend = await this.userDocumentModel
+        .aggregate([
+          { $match: { _id: { $ne: new mongoose.Types.ObjectId(user_id) } } },
+          { $lookup: { from: 'friends', localField: '_id', foreignField: 'sender_id', as: 'sender' } },
+          { $lookup: { from: 'friends', localField: '_id', foreignField: 'receiver_id', as: 'receiver' } },
+          {
+            $match: {
+              $and: [{ $expr: { $eq: [{ $size: '$sender' }, 0] } }, { $expr: { $eq: [{ $size: '$receiver' }, 0] } }],
+              ...(Number(query.position) && { createdAt: orderQuery('desc', query.position) }),
+            },
+          },
+        ])
+        .sort({ createdAt: -1 })
+        .limit(numberOfLimit);
+
+      return new BaseResponse({
+        data: suggestFriend.map((item) => ({
+          ...new UserResponse(item),
+          position: new Date(item.createdAt).getTime(),
+        })),
+      });
+    } catch (error) {
+      throw new CatchError(error);
+    }
+  }
+
+  async contactType(user_id: string, target_id: string) {
+    if (user_id === target_id.toString()) {
+      return {
+        type: CONTACT_TYPE.IT_ME,
+      };
+    }
+
+    const existsFriend = await this.friendDocument.aggregate([
+      {
+        $match: {
+          $or: [
+            { sender_id: new mongoose.Types.ObjectId(user_id), receiver_id: new mongoose.Types.ObjectId(target_id) },
+            { sender_id: new mongoose.Types.ObjectId(target_id), receiver_id: new mongoose.Types.ObjectId(user_id) },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          type: {
+            $cond: {
+              if: { $eq: ['$status', BOOLEAN.TRUE] },
+              then: CONTACT_TYPE.FRIEND,
+              else: {
+                $cond: {
+                  if: { $eq: ['$sender_id', new mongoose.Types.ObjectId(user_id)] },
+                  then: CONTACT_TYPE.REQUEST,
+                  else: CONTACT_TYPE.PENDING,
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    if (existsFriend.length === 0) {
+      return {
+        type: CONTACT_TYPE.NONE,
+      };
+    } else {
+      return {
+        type: existsFriend[0].type,
+      };
     }
   }
 }

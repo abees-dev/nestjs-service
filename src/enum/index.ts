@@ -13,6 +13,7 @@ export enum CONTACT_TYPE {
   FRIEND = 1,
   REQUEST = 2,
   PENDING = 3,
+  IT_ME = 4,
 }
 
 export enum VIEW {

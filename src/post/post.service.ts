@@ -19,6 +19,7 @@ import { Format } from '../utils/utils.format';
 import { FeelingResponse } from '../response/feeling.response';
 import { FeelingQueryDto } from './dto/feeling-query.dto';
 import { orderQuery } from 'src/utils/util.order.query';
+import { FriendService } from '../friend/friend.service';
 
 @Injectable()
 export class PostService {
@@ -29,6 +30,7 @@ export class PostService {
     @InjectModel(USER_SCHEMA) private userModel: Model<UserDocument>,
     @InjectModel(FEELING_SCHEMA) private feelingModel: Model<FeelingDocument>,
     @Inject(MICRO_SERVICE) private microservice: Microservice,
+    private friendService: FriendService,
   ) {}
 
   async getFeeling(query: FeelingQueryDto) {
@@ -214,7 +216,20 @@ export class PostService {
         .sort({ createdAt: -1 })
         .limit(numberOfLimit);
 
-      return new BaseResponse({ data: PostResponse.mapList(data) });
+      const mapList = await Promise.all(
+        data.map(async (post) => {
+          const { type } = await this.friendService.contactType(user_id, post.user._id);
+          return new PostResponse({
+            ...post,
+            user: {
+              ...post.user,
+              contact_type: type,
+            },
+          });
+        }),
+      );
+
+      return new BaseResponse({ data: mapList });
     } catch (e) {
       throw new CatchError(e);
     }
