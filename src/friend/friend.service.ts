@@ -272,13 +272,13 @@ export class FriendService {
         .aggregate([
           {
             $match: {
-              sender_id: new mongoose.Types.ObjectId(user_id),
+              receiver_id: new mongoose.Types.ObjectId(user_id),
               status: BOOLEAN.FALSE,
               ...(Number(query?.position) && { createdAt: { $lt: Number(query?.position) } }),
             },
           },
           {
-            $lookup: { from: 'users', localField: 'receiver_id', foreignField: '_id', as: 'user' },
+            $lookup: { from: 'users', localField: 'sender_id', foreignField: '_id', as: 'user' },
           },
           {
             $unwind: {
