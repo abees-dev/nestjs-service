@@ -14,7 +14,6 @@ import { USER_SCHEMA, UserDocument } from '../user/entities/user.entity';
 import { POST_SCHEMA, PostDocument } from '../post/entities/post.entity';
 import { isEmpty } from 'lodash';
 import { NOTIFICATION_TYPE } from '../enum';
-import { REACTION_TYPE } from '../enum/reaction';
 
 @Injectable()
 export class NotificationService implements OnApplicationBootstrap {
@@ -99,18 +98,25 @@ export class NotificationService implements OnApplicationBootstrap {
       const pushToken = await this.pushTokenDocument.findOne({
         user_id: new mongoose.Types.ObjectId(object_id),
       });
+      const user = await this.userDocument.findById(user_id);
+
       pushToken?.push_token &&
         (await this.firebaseAdmin.messaging().sendToDevice(pushToken?.push_token, {
           notification: {
             title,
-            body: content,
-            icon: `https://upload.abeesdev.com/${avatar}`,
+            body: `${user.full_name} ${content}`,
+            icon: `http://13.215.193.218:3009/${avatar}`,
+            clickAction: `http://13.215.193.218:3009/${avatar}`,
+            // badge: `http://13.215.193.218:3009/${avatar}`,
           },
           data: {
             notification_type: notification_type.toString(),
             object_id: object_id,
             user_id: user_id,
             title,
+            avatar: `http://13.215.193.218:3009/${avatar}`,
+            content: `${user.full_name} ${content}`,
+            name: user.full_name,
           },
         }));
 
@@ -134,6 +140,8 @@ export class NotificationService implements OnApplicationBootstrap {
 
       const post: any = await this.postModel.findById(object_id).populate('user');
 
+      const user = await this.userDocument.findById(user_id);
+
       await Promise.all(
         followPost.map(async (item) => {
           const newContent = `${this.handleContentNotification(notification_type)} ${
@@ -156,7 +164,7 @@ export class NotificationService implements OnApplicationBootstrap {
                 notification: {
                   title,
                   body: newContent,
-                  icon: `https://upload.abeesdev.com/public/resource/image/c25f727653c248f9a3073a75eb78507b.jpeg`,
+                  icon: `http://13.215.193.218:3009/public/resource/image/0e69de3682fb4efd9b571939eaa27f4f.jpeg`,
                 },
                 data: {
                   notification_type: notification_type.toString(),
@@ -164,7 +172,7 @@ export class NotificationService implements OnApplicationBootstrap {
                   user_id: user_id,
                   title,
                   avatar: post.user?.avatar,
-                  content: newContent,
+                  content: `${user.full_name} ${newContent}`,
                   name: post.user?.full_name,
                 },
               });
@@ -179,7 +187,7 @@ export class NotificationService implements OnApplicationBootstrap {
   handleContentNotification(notification_type: number) {
     switch (notification_type) {
       case NOTIFICATION_TYPE.COMMENT_POST:
-        return 'đã bình luận bài viết của bạn';
+        return 'đã bình luận bài viết của ';
       case NOTIFICATION_TYPE.REACTION_POST:
         return 'đã bày tỏ cảm xúc về bài viết của';
       case NOTIFICATION_TYPE.REACTION_COMMENT:
