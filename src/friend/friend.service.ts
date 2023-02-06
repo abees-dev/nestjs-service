@@ -296,7 +296,7 @@ export class FriendService {
       const mapList = requestFriend.map((item: any) => {
         return new FriendResponse({
           ...item,
-          contact_type: CONTACT_TYPE.REQUEST,
+          contact_type: CONTACT_TYPE.PENDING,
           user: item.user,
         });
       });
