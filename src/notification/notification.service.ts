@@ -171,7 +171,7 @@ export class NotificationService implements OnApplicationBootstrap {
                   title,
                   avatar: post.user?.avatar,
                   content: newContent,
-                  name: post.user?.full_name,
+                  name: user?.full_name,
                 },
               });
             });
