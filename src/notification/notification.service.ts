@@ -106,8 +106,6 @@ export class NotificationService implements OnApplicationBootstrap {
             title,
             body: `${user.full_name} ${content}`,
             icon: `http://13.215.193.218:3009/${avatar}`,
-            clickAction: `http://13.215.193.218:3009/${avatar}`,
-            // badge: `http://13.215.193.218:3009/${avatar}`,
           },
           data: {
             notification_type: notification_type.toString(),
@@ -115,7 +113,7 @@ export class NotificationService implements OnApplicationBootstrap {
             user_id: user_id,
             title,
             avatar: `http://13.215.193.218:3009/${avatar}`,
-            content: `${user.full_name} ${content}`,
+            content: content,
             name: user.full_name,
           },
         }));
@@ -163,7 +161,7 @@ export class NotificationService implements OnApplicationBootstrap {
               await this.firebaseAdmin.messaging().sendToDevice(token, {
                 notification: {
                   title,
-                  body: newContent,
+                  body: `${user.full_name} ${newContent}`,
                   icon: `http://13.215.193.218:3009/public/resource/image/0e69de3682fb4efd9b571939eaa27f4f.jpeg`,
                 },
                 data: {
@@ -172,7 +170,7 @@ export class NotificationService implements OnApplicationBootstrap {
                   user_id: user_id,
                   title,
                   avatar: post.user?.avatar,
-                  content: `${user.full_name} ${newContent}`,
+                  content: newContent,
                   name: post.user?.full_name,
                 },
               });
