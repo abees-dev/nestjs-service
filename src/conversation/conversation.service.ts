@@ -6,7 +6,7 @@ import mongoose, { Model } from 'mongoose';
 import { CONVERSATION_MEMBER_SCHEMA, ConversationMemberDocument } from './entities/conversation.member';
 import { CONVERSATION_SETTING_SCHEMA, ConversationSettingDocument } from './entities/conversation.setting.entity';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
-import { BOOLEAN, CONVERSATION_PERMISSION, CONVERSATION_TYPE } from '../enum';
+import { BOOLEAN, CONTACT_TYPE, CONVERSATION_PERMISSION, CONVERSATION_TYPE } from '../enum';
 import { isEmpty } from 'lodash';
 import { BaseResponse } from '../response';
 import { ChangeSettingDto } from './dto/change-setting.dto';
@@ -130,7 +130,7 @@ export class ConversationService {
             from: 'conversation_members',
             localField: '_id',
             foreignField: 'conversation_id',
-            as: 'members',
+            as: 'member',
             pipeline: [{ $match: { user_id: new mongoose.Types.ObjectId(user_id) } }],
           },
         },
@@ -138,17 +138,36 @@ export class ConversationService {
           $lookup: { from: 'conversation_settings', localField: '_id', foreignField: 'conversation_id', as: 'setting' },
         },
         {
+          $lookup: {
+            from: 'users',
+            localField: 'members',
+            foreignField: '_id',
+            as: 'members',
+          },
+        },
+        {
           $addFields: {
             setting: { $arrayElemAt: ['$setting', 0] },
-            member: { $arrayElemAt: ['$members', 0] },
-            permission: { $arrayElemAt: ['$members.permission', 0] },
+            member: { $arrayElemAt: ['$member', 0] },
+            permission: { $arrayElemAt: ['$member.permission', 0] },
+            is_pinned: { $arrayElemAt: ['$member.is_pinned', 0] },
           },
         },
       ]);
       if (!conversation[0]) throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'Conversation not found');
 
       return new BaseResponse({
-        data: new ConversationDetailResponse(conversation[0]),
+        data: new ConversationDetailResponse({
+          ...conversation[0],
+          name:
+            conversation[0].type === CONVERSATION_TYPE.GROUP
+              ? conversation[0].name
+              : conversation[0].members.find((member) => member._id.toString() !== user_id).full_name,
+          avatar:
+            conversation[0].type === CONVERSATION_TYPE.GROUP
+              ? conversation[0].avatar
+              : conversation[0].members.find((member) => member._id.toString() !== user_id).avatar,
+        }),
       });
     } catch (e) {
       throw new CatchError(e);
@@ -246,15 +265,25 @@ export class ConversationService {
               from: 'conversation_members',
               localField: '_id',
               foreignField: 'conversation_id',
-              as: 'members',
+              as: 'member',
               pipeline: [{ $match: { user_id: new mongoose.Types.ObjectId(user_id) } }],
             },
           },
           {
+            $lookup: {
+              from: 'users',
+              localField: 'members',
+              foreignField: '_id',
+              as: 'members',
+            },
+          },
+          {
             $addFields: {
-              permission: { $arrayElemAt: ['$members.permission', 0] },
-              is_pinned: { $arrayElemAt: ['$members.is_pinned', 0] },
-              last_removed_message: { $arrayElemAt: ['$members.last_removed_message', 0] },
+              permission: { $arrayElemAt: ['$member.permission', 0] },
+              is_pinned: { $arrayElemAt: ['$member.is_pinned', 0] },
+              last_removed_message: {
+                $arrayElemAt: ['$member.last_removed_message', 0],
+              },
             },
           },
           {
@@ -270,8 +299,23 @@ export class ConversationService {
           is_pinned: -1,
           last_message_at: -1,
         });
+
+      // return conversation;
+
       return new BaseResponse({
-        data: ConversationResponse.mapList(conversation),
+        data: conversation.map((item) => {
+          return {
+            ...new ConversationResponse(item),
+            name:
+              item.type === CONVERSATION_TYPE.GROUP
+                ? item.name
+                : item.members.find((member) => member._id.toString() !== user_id).full_name,
+            avatar:
+              item.type === CONVERSATION_TYPE.GROUP
+                ? item.avatar
+                : item.members.find((member) => member._id.toString() !== user_id).avatar,
+          };
+        }),
       });
     } catch (e) {
       throw new CatchError(e);

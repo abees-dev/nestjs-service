@@ -1,3 +1,5 @@
+import { UserResponse } from './user.response';
+
 export class ConversationResponse {
   _id: string;
   avatar: string;
@@ -15,6 +17,7 @@ export class ConversationResponse {
   updatedAt: Date;
   no_of_seen: number;
   position: number;
+  members: UserResponse[];
 
   constructor(conversation: ConversationResponse) {
     this._id = conversation?._id ?? null;
