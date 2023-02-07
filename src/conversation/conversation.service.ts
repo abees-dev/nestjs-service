@@ -32,7 +32,7 @@ export class ConversationService {
       if (isEmpty(members)) throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Members is required');
 
       const conversation = await this.conversationDocument.findOne({
-        members: { $eq: [user_id, ...members] },
+        members: { $all: [user_id, ...members] },
         deleted: BOOLEAN.FALSE,
       });
 
