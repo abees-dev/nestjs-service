@@ -26,7 +26,8 @@ export class AppGatewayGateway implements OnGatewayConnection {
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.headers.authorization?.split(' ')[1];
+      const token = client.handshake.auth.token;
+
       const payload = await this.appGatewayService.handleConnection(token, client.id);
 
       if (!payload) {
