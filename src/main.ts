@@ -7,10 +7,15 @@ import { NotFoundExceptionFilter } from './utils/util.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { CONFIG_SERVICE } from './contrains';
 import * as process from 'process';
+import { RedisIoAdapter } from './app-gateway/adaptor/redis.adaptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const redisAdapter = new RedisIoAdapter(app);
+  await redisAdapter.connectToRedis();
+
+  app.useWebSocketAdapter(redisAdapter);
   app.setGlobalPrefix(process.env.PREFIX);
 
   const config = new DocumentBuilder()

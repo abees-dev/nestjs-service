@@ -43,6 +43,11 @@ export class AppGatewayGateway implements OnGatewayConnection {
     }
   }
 
+  @SubscribeMessage('message-adaptor')
+  async handleMessageTestAdaptor(client: Socket, payload: any) {
+    client.emit('message', payload);
+  }
+
   async handleDisconnect(client: Socket) {
     try {
       await this.appGatewayService.handleDisconnect(client.id);
