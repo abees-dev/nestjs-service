@@ -103,14 +103,6 @@ export class MessageService {
             $lookup: { from: 'uploads', localField: 'medias', foreignField: '_id', as: 'medias' },
           },
           {
-            $lookup: {
-              from: 'messages',
-              localField: 'message_reply',
-              foreignField: '_id',
-              as: 'reply',
-            },
-          },
-          {
             $addFields: {
               user: { $arrayElemAt: ['$user', 0] },
             },
@@ -129,10 +121,10 @@ export class MessageService {
 
       const mapList = await Promise.all(
         messages.map(async (message) => {
-          const reply = message.message_reply ? await this.getReplyMessages(message.message_reply) : null;
+          const parent = message.message_reply_id ? await this.getReplyMessages(message.message_reply_id) : null;
           return {
             ...new MessageResponse(message),
-            reply: reply ? new MessageResponse(reply) : null,
+            message_parent: parent ? new MessageResponse(parent) : null,
           };
         }),
       );
@@ -145,7 +137,7 @@ export class MessageService {
     }
   }
 
-  async getReplyMessages(message_reply_id) {
+  async getReplyMessages(message_reply_id: string) {
     const messageResponse = await this.messageModel.aggregate([
       {
         $match: { _id: message_reply_id },
@@ -165,6 +157,7 @@ export class MessageService {
         },
       },
     ]);
+
     return messageResponse[0];
   }
 }

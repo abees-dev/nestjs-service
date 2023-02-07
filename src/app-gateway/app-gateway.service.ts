@@ -42,6 +42,8 @@ export class AppGatewayService {
 
       const checkMessageId = verifyObjectId(message_reply_id);
 
+      console.log(message_reply_id);
+
       const message = new this.messageModel({
         ...rest,
         user_id,

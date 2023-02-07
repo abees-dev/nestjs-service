@@ -6,7 +6,7 @@ export class MessageResponse {
   conversation_id: string;
   link: string;
   message: string;
-  message_reply: string;
+  message_reply_id: string;
   thumbnail: string;
   type: number;
   createdAt: Date;
@@ -22,7 +22,7 @@ export class MessageResponse {
     this.conversation_id = data?.conversation_id ?? '';
     this.link = data?.link ?? '';
     this.message = data?.message ?? '';
-    this.message_reply = data?.message_reply ?? '';
+    this.message_reply_id = data?.message_reply_id ?? '';
     this.thumbnail = data?.thumbnail ?? '';
     this.type = data?.type ?? 0;
     this.createdAt = data?.createdAt ?? null;
