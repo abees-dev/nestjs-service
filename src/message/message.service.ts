@@ -9,6 +9,7 @@ import { CONVERSATION_SCHEMA, ConversationDocument } from '../conversation/entit
 import { QueryMessageDto } from './dto/query.message.dto';
 import { BaseResponse } from '../response';
 import { MessageResponse } from '../response/message.response';
+import { orderQuery } from 'src/utils/util.order.query';
 
 @Injectable()
 export class MessageService {
@@ -75,6 +76,8 @@ export class MessageService {
 
       const { limit } = queryMessageDto;
 
+      const order = queryMessageDto?.order || 'desc';
+
       const numberOfLimit = Number(limit) || 10;
 
       const messages = await this.messageModel
@@ -111,12 +114,12 @@ export class MessageService {
             $match: {
               message_removes: { $size: 0 },
               ...(Number(queryMessageDto?.position) && {
-                createdAt: { $gt: new Date(Number(queryMessageDto.position)) },
+                createdAt: orderQuery(order, queryMessageDto.position),
               }),
             },
           },
         ])
-        .sort({ createdAt: 1 })
+        .sort({ createdAt: order })
         .limit(numberOfLimit);
 
       const mapList = await Promise.all(

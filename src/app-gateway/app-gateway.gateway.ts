@@ -120,10 +120,10 @@ export class AppGatewayGateway implements OnGatewayConnection {
     }
   }
 
-
-
   @SubscribeMessage(SOCKET_MESSAGE.MESSAGE_STICKER)
   async handleMessageSticker(client: Socket, payload: MessageDto) {
+    console.log(payload);
+
     try {
       const message = await this.appGatewayService.handleMessage(client.data.user_id, payload, MESSAGE_TYPE.STICKER);
       this.server.to(payload.conversation_id).emit(SOCKET_MESSAGE.MESSAGE_STICKER, message);
