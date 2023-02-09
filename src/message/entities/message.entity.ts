@@ -34,6 +34,9 @@ export class Message {
 
   @Prop({ type: String, default: '' })
   thumbnail: string;
+
+  @Prop({ type: String, default: '' })
+  sticker: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

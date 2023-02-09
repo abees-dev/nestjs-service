@@ -111,12 +111,12 @@ export class MessageService {
             $match: {
               message_removes: { $size: 0 },
               ...(Number(queryMessageDto?.position) && {
-                createdAt: { $lt: new Date(Number(queryMessageDto.position)) },
+                createdAt: { $gt: new Date(Number(queryMessageDto.position)) },
               }),
             },
           },
         ])
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: 1 })
         .limit(numberOfLimit);
 
       const mapList = await Promise.all(

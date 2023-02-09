@@ -8,4 +8,5 @@ export class MessageDto {
   thumbnail: string;
   type: number;
   message_reply_id: string;
+  sticker: string;
 }

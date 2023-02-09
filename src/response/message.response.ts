@@ -16,6 +16,7 @@ export class MessageResponse {
   medias: MediaResponse[];
   target_user: UserResponse[];
   user: UserResponse;
+  sticker: string;
 
   constructor(data: MessageResponse) {
     this._id = data?._id ?? '';
@@ -32,6 +33,7 @@ export class MessageResponse {
     this.medias = MediaResponse.mapList(data?.medias);
     this.target_user = UserResponse.mapList(data?.target_user);
     this.user = new UserResponse(data?.user);
+    this.sticker = data?.sticker ?? '';
   }
 
   static mapList(data: MessageResponse[]) {
