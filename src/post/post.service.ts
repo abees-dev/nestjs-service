@@ -117,6 +117,7 @@ export class PostService {
 
       const data = await this.postModel
         .aggregate([
+          ...(query.user_id && [{ $match: { user: new mongoose.Types.ObjectId(query.user_id) } }]),
           {
             $lookup: {
               from: 'friends',

@@ -6,4 +6,5 @@ export class PayloadNotificationDto {
   content: string;
   notification_type: number;
   title: string;
+  user_ids?: string[];
 }

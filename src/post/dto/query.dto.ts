@@ -1,5 +1,6 @@
 import { IsNumberString, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsObjectIdOptional } from '../../decorator/vaidator';
 
 export class GetPostQuery {
   @ApiPropertyOptional({
@@ -21,4 +22,8 @@ export class GetPostQuery {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsObjectIdOptional()
+  user_id?: string;
 }

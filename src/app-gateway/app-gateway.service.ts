@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { AUTH_SERVICE, REDIS_CONNECTION, REDIS_SERVICE } from '../contrains';
+import { AUTH_SERVICE, MICRO_SERVICE, REDIS_CONNECTION, REDIS_SERVICE } from '../contrains';
 import { RedisService } from '../redis/redis.service';
 import { AuthService } from '../auth/auth.service';
 import { UserConnection } from '../types/connection.redis';
@@ -14,6 +14,9 @@ import { CONVERSATION_MEMBER_SCHEMA, ConversationMemberDocument } from '../conve
 import { MESSAGE_REMOVE_SCHEMA, MessageRemoveDocument } from '../message/entities/message-remove.entity';
 import { MessageRemoveDto } from '../message/dto/message-remove.dto';
 import { verifyObjectId } from '../utils/util.objectId';
+import { PayloadNotificationDto } from '../notification/dto/payload-notification.dto';
+import { MESSAGE_PATTERN, NOTIFICATION_TYPE } from '../enum';
+import { Microservice } from '../microservice/micro.service';
 
 @Injectable()
 export class AppGatewayService {
@@ -26,6 +29,7 @@ export class AppGatewayService {
     @InjectModel(MESSAGE_REMOVE_SCHEMA) private messageRemoveModel: Model<MessageRemoveDocument>,
     @InjectModel(CONVERSATION_SCHEMA) private conversationModel: Model<ConversationDocument>,
     @InjectModel(CONVERSATION_MEMBER_SCHEMA) private conversationMemberModel: Model<ConversationMemberDocument>,
+    @Inject(MICRO_SERVICE) private microservice: Microservice,
   ) {}
 
   async handleMessage(user_id: string, payload: MessageDto, type: number) {
@@ -79,6 +83,37 @@ export class AppGatewayService {
           },
         },
       ]);
+
+      const connections = await this.redisService.get<UserConnection[]>(REDIS_CONNECTION);
+
+      const members = conversation.members.map((item) => item.toString());
+
+      const filterConnection =
+        connections?.filter(
+          (connection) =>
+            members.includes(connection.user_id) && connection.room_id == '' && connection.user_id !== user_id,
+        ) || [];
+
+      __socket
+        .to(filterConnection.map((item) => item.socket_id))
+        .emit('last_message', new MessageResponse(messageResponse[0]));
+
+      const useOffline = members.filter(
+        (item) => item !== user_id && !filterConnection.map((item) => item.user_id).includes(item),
+      );
+
+      if (useOffline.length > 0) {
+        this.microservice.send<PayloadNotificationDto>(MESSAGE_PATTERN.NOTIFY_PRIORITY_HANDLER, {
+          user_id,
+          notification_type: NOTIFICATION_TYPE.NEW_MESSAGE,
+          avatar: messageResponse[0].user.full_name,
+          object_id: payload.conversation_id,
+          title: 'Message',
+          content: `${messageResponse[0].user.full_name} đã gửi tin nhắn đến bạn`,
+          name: messageResponse[0].user.full_name,
+          user_ids: useOffline,
+        });
+      }
 
       return new MessageResponse(messageResponse[0]);
     } catch (e) {
@@ -134,7 +169,21 @@ export class AppGatewayService {
       const newConnection =
         connections?.map((connection) => ({ ...connection, ...(connection.user_id === user_id && { room_id }) })) || [];
 
-      await this.redisService.set(REDIS_CONNECTION, newConnection);
+      const conversation = await this.conversationModel.findById(room_id);
+      if (!conversation) {
+        throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Conversation not found');
+      }
+
+      await this.conversationMemberModel.findOneAndUpdate(
+        {
+          conversation_id: room_id,
+          user_id,
+        },
+        {
+          last_seen_message: conversation.last_message,
+        },
+      ),
+        await this.redisService.set(REDIS_CONNECTION, newConnection);
     } catch (e) {
       this.logger.error(e);
     }

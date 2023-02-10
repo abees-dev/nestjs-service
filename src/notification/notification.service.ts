@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
 import serviceAccount from '../../firebase-cert.json';
-import { RegisterDeviceDto } from './dto/register-device.dto';
+import { DeleteDeviceDto, RegisterDeviceDto } from './dto/register-device.dto';
 import { CatchError } from '../utils/utils.error';
 import { InjectModel } from '@nestjs/mongoose';
 import { PUSH_TOKEN_SCHEMA, PushTokenDocument } from './entities/push-token.entity';
@@ -14,6 +14,9 @@ import { USER_SCHEMA, UserDocument } from '../user/entities/user.entity';
 import { POST_SCHEMA, PostDocument } from '../post/entities/post.entity';
 import { isEmpty } from 'lodash';
 import { NOTIFICATION_TYPE } from '../enum';
+import { QueryNotificationDto } from './dto/query.notification.dto';
+import { orderQuery } from '../utils/util.order.query';
+import { NotificationResponse } from '../response/NotificationResponse';
 
 @Injectable()
 export class NotificationService implements OnApplicationBootstrap {
@@ -87,6 +90,18 @@ export class NotificationService implements OnApplicationBootstrap {
           message: 'Register device success',
         });
       }
+    } catch (e) {
+      throw new CatchError(e);
+    }
+  }
+
+  async deleteDevice(deleteDeviceDto: DeleteDeviceDto) {
+    try {
+      await this.pushTokenDocument.findOneAndDelete({
+        user_id: deleteDeviceDto.user_id,
+        device_id: deleteDeviceDto.device_id,
+      });
+      return new BaseResponse({});
     } catch (e) {
       throw new CatchError(e);
     }
@@ -190,6 +205,55 @@ export class NotificationService implements OnApplicationBootstrap {
         return 'đã bày tỏ cảm xúc về bài viết của';
       case NOTIFICATION_TYPE.REACTION_COMMENT:
         return 'đã bày tỏ cảm xúc về bình luận của';
+    }
+  }
+
+  async getNotification(user_id: string, query: QueryNotificationDto) {
+    try {
+      const order = query?.order || 'desc';
+      const notification = await this.notificationDocument.aggregate([
+        {
+          $match: {
+            user_id: new mongoose.Types.ObjectId(user_id),
+            ...(Number(query?.position) && {
+              createdAt: orderQuery(order, query.position),
+            }),
+          },
+        },
+      ]);
+      return new BaseResponse({
+        data: NotificationResponse.mapList(notification),
+      });
+    } catch (e) {
+      throw new CatchError(e);
+    }
+  }
+
+  async notifyMessage(payload: PayloadNotificationDto) {
+    try {
+      const { user_id, title, content, notification_type, object_id, avatar, user_ids } = payload;
+      const pushToken = await this.pushTokenDocument.find({
+        user_id: { $in: user_ids },
+      });
+
+      !isEmpty(pushToken) &&
+        (await this.firebaseAdmin.messaging().sendMulticast({
+          tokens: pushToken.map((item) => item.push_token),
+          notification: {
+            title,
+            body: content,
+          },
+          data: {
+            notification_type: notification_type.toString(),
+            object_id: object_id,
+            user_id: user_id,
+            title,
+            avatar: `https://upload.abeesdev.com/${avatar}`,
+            content: content,
+          },
+        }));
+    } catch (e) {
+      throw new CatchError(e);
     }
   }
 }

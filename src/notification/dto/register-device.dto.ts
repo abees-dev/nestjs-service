@@ -5,7 +5,6 @@ export class RegisterDeviceDto {
   @IsObjectId()
   user_id: string;
 
-  @IsNotEmpty()
   @IsString()
   push_token: string;
 
@@ -16,4 +15,13 @@ export class RegisterDeviceDto {
   @IsOptional()
   @IsString()
   platform: string;
+}
+
+export class DeleteDeviceDto {
+  @IsObjectId()
+  user_id: string;
+
+  @IsNotEmpty()
+  @IsString()
+  device_id: string;
 }

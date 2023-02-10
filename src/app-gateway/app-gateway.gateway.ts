@@ -7,20 +7,22 @@ import {
 } from '@nestjs/websockets';
 import { AppGatewayService } from './app-gateway.service';
 import { Server, Socket } from 'socket.io';
-import { HttpStatus, Logger } from '@nestjs/common';
+import { HttpStatus, Logger, OnModuleInit } from '@nestjs/common';
 import { MESSAGE_TYPE, SOCKET_MESSAGE } from '../enum';
 import { SocketRoomDto } from './dto/socket-room.dto';
 import { MessageDto } from './dto/create-app-gateway.dto';
 import { BaseResponse } from '../response';
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class AppGatewayGateway implements OnGatewayConnection {
+export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
   @WebSocketServer()
   private server: Server;
 
   private logger = new Logger(AppGatewayGateway.name);
 
-  constructor(private readonly appGatewayService: AppGatewayService) {
+  constructor(private readonly appGatewayService: AppGatewayService) {}
+
+  onModuleInit(): any {
     global.__socket = this.server;
   }
 
@@ -122,8 +124,6 @@ export class AppGatewayGateway implements OnGatewayConnection {
 
   @SubscribeMessage(SOCKET_MESSAGE.MESSAGE_STICKER)
   async handleMessageSticker(client: Socket, payload: MessageDto) {
-    console.log(payload);
-
     try {
       const message = await this.appGatewayService.handleMessage(client.data.user_id, payload, MESSAGE_TYPE.STICKER);
       this.server.to(payload.conversation_id).emit(SOCKET_MESSAGE.MESSAGE_STICKER, message);
