@@ -140,6 +140,7 @@ export class NotificationService implements OnApplicationBootstrap {
         notification_type,
         object_id: user_id,
         avatar,
+        name: user.full_name,
       }).save();
     } catch (e) {
       this.logger.error(e);
