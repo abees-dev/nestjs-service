@@ -212,16 +212,20 @@ export class NotificationService implements OnApplicationBootstrap {
   async getNotification(user_id: string, query: QueryNotificationDto) {
     try {
       const order = query?.order || 'desc';
-      const notification = await this.notificationDocument.aggregate([
-        {
-          $match: {
-            user_id: new mongoose.Types.ObjectId(user_id),
-            ...(Number(query?.position) && {
-              createdAt: orderQuery(order, query.position),
-            }),
+      const numberOfLimit = Number(query?.limit) || 10;
+      const notification = await this.notificationDocument
+        .aggregate([
+          {
+            $match: {
+              user_id: new mongoose.Types.ObjectId(user_id),
+              ...(Number(query?.position) && {
+                createdAt: orderQuery(order, query.position),
+              }),
+            },
           },
-        },
-      ]);
+        ])
+        .sort({ createdAt: order })
+        .limit(numberOfLimit);
       return new BaseResponse({
         data: NotificationResponse.mapList(notification),
       });

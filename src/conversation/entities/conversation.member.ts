@@ -24,7 +24,7 @@ export class ConversationMember {
   @Prop({ type: Number, default: 0 })
   deleted: boolean;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId,default: new mongoose.Types.ObjectId() })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, default: new mongoose.Types.ObjectId() })
   last_seen_message: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, default: new mongoose.Types.ObjectId() })
@@ -32,6 +32,9 @@ export class ConversationMember {
 
   @Prop({ type: Number, default: 0 })
   is_pinned: number;
+
+  @Prop({ type: Number, default: 0 })
+  no_of_not_seen: number;
 }
 
 export const ConversationMemberSchema = SchemaFactory.createForClass(ConversationMember);

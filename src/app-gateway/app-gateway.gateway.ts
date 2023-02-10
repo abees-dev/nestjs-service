@@ -58,6 +58,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.logger.log(`Client disconnected: ${client.id}`);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 
@@ -76,6 +77,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.logger.log(`Client join room: ${client.id} - ${payload.room_id}`);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 
@@ -89,6 +91,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.logger.log(`Client leave room: ${client.id} - ${payload.room_id}`);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 
@@ -99,6 +102,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.server.to(payload.conversation_id).emit(SOCKET_MESSAGE.MESSAGE_TEXT, message);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 
@@ -109,6 +113,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.server.to(payload.conversation_id).emit(SOCKET_MESSAGE.MESSAGE_IMAGE, message);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 
@@ -119,6 +124,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.server.to(payload.conversation_id).emit(SOCKET_MESSAGE.MESSAGE_VIDEO, message);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 
@@ -129,6 +135,7 @@ export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
       this.server.to(payload.conversation_id).emit(SOCKET_MESSAGE.MESSAGE_STICKER, message);
     } catch (e) {
       this.logger.error(e);
+      this.handleEventError(client.id, e);
     }
   }
 

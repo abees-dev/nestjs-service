@@ -16,6 +16,11 @@ import { AddMemberDto } from './entities/addmember.dto';
 import { ConversationResponse } from '../response/conversation.response';
 import { ChangeConversationDto } from './dto/change-conversation.dto';
 import { ChangeAdminDto } from './dto/change-admin.dto';
+import { QueryConversationDto } from './dto/query-conversation.dto';
+import { orderQuery } from 'src/utils/util.order.query';
+import { MESSAGE_SCHEMA, MessageDocument } from '../message/entities/message.entity';
+import { UserResponse } from '../response/user.response';
+import { MessageResponse } from '../response/message.response';
 
 @Injectable()
 export class ConversationService {
@@ -23,6 +28,7 @@ export class ConversationService {
     @InjectModel(CONVERSATION_SCHEMA) private conversationDocument: Model<ConversationDocument>,
     @InjectModel(CONVERSATION_MEMBER_SCHEMA) private conversationMemberDocument: Model<ConversationMemberDocument>,
     @InjectModel(CONVERSATION_SETTING_SCHEMA) private conversationSettingDocument: Model<ConversationSettingDocument>,
+    @InjectModel(MESSAGE_SCHEMA) private messageModel: Model<MessageDocument>,
   ) {}
 
   async createConversation(user_id: string, createConversationDto: CreateConversationDto) {
@@ -167,6 +173,10 @@ export class ConversationService {
             conversation[0].type === CONVERSATION_TYPE.GROUP
               ? conversation[0].avatar
               : conversation[0].members.find((member) => member._id.toString() !== user_id).avatar,
+          user_id:
+            conversation[0].type === CONVERSATION_TYPE.GROUP
+              ? ''
+              : conversation[0].members.find((member) => member._id.toString() !== user_id)._id,
         }),
       });
     } catch (e) {
@@ -256,8 +266,10 @@ export class ConversationService {
     }
   }
 
-  async getConversations(user_id: string) {
+  async getConversations(user_id: string, query: QueryConversationDto) {
     try {
+      const order = query?.order || 'desc';
+      const numberOfLimit = query?.limit || 10;
       const conversation = await this.conversationDocument
         .aggregate([
           {
@@ -265,25 +277,44 @@ export class ConversationService {
               from: 'conversation_members',
               localField: '_id',
               foreignField: 'conversation_id',
-              as: 'member',
+              as: 'user',
               pipeline: [{ $match: { user_id: new mongoose.Types.ObjectId(user_id) } }],
             },
           },
           {
-            $lookup: {
-              from: 'users',
-              localField: 'members',
-              foreignField: '_id',
-              as: 'members',
-            },
+            $unwind: { path: '$user', preserveNullAndEmptyArrays: true },
           },
           {
+            $lookup: { from: 'users', localField: 'members', foreignField: '_id', as: 'members' },
+          },
+          {
+            $lookup: {
+              from: 'messages',
+              localField: 'last_message',
+              foreignField: '_id',
+              as: 'last_message',
+              pipeline: [
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user_id',
+                    foreignField: '_id',
+                    as: 'user',
+                  },
+                },
+                {
+                  $unwind: { path: '$user', preserveNullAndEmptyArrays: true },
+                },
+              ],
+            },
+          },
+          { $unwind: { path: '$last_message', preserveNullAndEmptyArrays: true } },
+          {
             $addFields: {
-              permission: { $arrayElemAt: ['$member.permission', 0] },
-              is_pinned: { $arrayElemAt: ['$member.is_pinned', 0] },
-              last_removed_message: {
-                $arrayElemAt: ['$member.last_removed_message', 0],
-              },
+              permission: '$user.permission',
+              is_pinned: '$user.is_pinned',
+              last_removed_message: '$user.last_removed_message',
+              no_of_not_seen: '$user.no_of_not_seen',
             },
           },
           {
@@ -292,15 +323,17 @@ export class ConversationService {
                 $ne: ['$last_message', '$last_removed_message'],
               },
               deleted: BOOLEAN.FALSE,
+              ...(Number(query?.position) && {
+                last_message_at: orderQuery(order, query.position),
+              }),
             },
           },
         ])
         .sort({
           is_pinned: -1,
-          last_message_at: -1,
-        });
-
-      // return conversation;
+          last_message_at: order,
+        })
+        .limit(numberOfLimit);
 
       return new BaseResponse({
         data: conversation.map((item) => {
@@ -314,6 +347,11 @@ export class ConversationService {
               item.type === CONVERSATION_TYPE.GROUP
                 ? item.avatar
                 : item.members.find((member) => member._id.toString() !== user_id).avatar,
+            user_id:
+              item.type === CONVERSATION_TYPE.GROUP
+                ? ''
+                : item.members.find((member) => member._id.toString() !== user_id)._id,
+            last_message: new MessageResponse(item.last_message),
           };
         }),
       });
@@ -442,6 +480,35 @@ export class ConversationService {
           permission: CONVERSATION_PERMISSION.ADMIN,
         }),
       ]);
-    } catch (e) {}
+    } catch (e) {
+      throw new CatchError(e);
+    }
+  }
+
+  async countUnread(user_id: string) {
+    try {
+      const conversationMember = await this.conversationMemberDocument.aggregate([
+        {
+          $match: {
+            user_id: new mongoose.Types.ObjectId(user_id),
+            no_of_not_seen: { $gt: 0 },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: '$no_of_not_seen' },
+          },
+        },
+      ]);
+
+      return new BaseResponse({
+        data: {
+          no_of_unread_message: conversationMember.length > 0 ? conversationMember[0].count : 0,
+        },
+      });
+    } catch (e) {
+      throw new CatchError(e);
+    }
   }
 }

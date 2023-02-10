@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ConversationService } from './conversation.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
@@ -9,6 +9,7 @@ import { LeaveConversationDto, ParamsConversationDto } from './dto/params.conver
 import { AddMemberDto } from './entities/addmember.dto';
 import { ChangeConversationDto } from './dto/change-conversation.dto';
 import { ChangeAdminDto } from './dto/change-admin.dto';
+import { QueryConversationDto } from './dto/query-conversation.dto';
 
 @Controller('conversation')
 @ApiTags('Conversation Controller')
@@ -18,8 +19,14 @@ export class ConversationController {
 
   @Get()
   @ApiBearerAuth()
-  async getConversations(@Req() req: IRequest) {
-    return await this.conversationService.getConversations(req.user_id);
+  async getConversations(@Req() req: IRequest, @Query() query: QueryConversationDto) {
+    return await this.conversationService.getConversations(req.user_id, query);
+  }
+
+  @Get('count_unread')
+  @ApiBearerAuth()
+  async countUnread(@Req() req: IRequest) {
+    return await this.conversationService.countUnread(req.user_id);
   }
 
   //Get Detail

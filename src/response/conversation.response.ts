@@ -15,9 +15,9 @@ export class ConversationResponse {
   type: number;
   createdAt: Date;
   updatedAt: Date;
-  no_of_seen: number;
   position: number;
   members: UserResponse[];
+  no_of_not_seen: number;
 
   constructor(conversation: ConversationResponse) {
     this._id = conversation?._id ?? null;
@@ -34,8 +34,8 @@ export class ConversationResponse {
     this.createdAt = conversation?.createdAt ?? null;
     this.updatedAt = conversation?.updatedAt ?? null;
     this.permission = conversation?.permission ?? 0;
-    this.no_of_seen = conversation?.no_of_seen ?? 0;
     this.position = conversation.createdAt ? new Date(conversation.createdAt).getTime() : 0;
+    this.no_of_not_seen = conversation?.no_of_not_seen ?? 0;
   }
 
   static mapList(conversation: ConversationResponse[]) {

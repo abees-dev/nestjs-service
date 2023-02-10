@@ -5,9 +5,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConversationProvider } from './entities/conversation.entity';
 import { ConversationMemberProvider } from './entities/conversation.member';
 import { ConversationSettingProvider } from './entities/conversation.setting.entity';
+import { MessageProvider } from '../message/entities/message.entity';
 
 @Module({
-  imports: [MongooseModule.forFeature([ConversationProvider, ConversationMemberProvider, ConversationSettingProvider])],
+  imports: [
+    MongooseModule.forFeature([
+      ConversationProvider,
+      ConversationMemberProvider,
+      ConversationSettingProvider,
+      MessageProvider,
+    ]),
+  ],
   controllers: [ConversationController],
   providers: [ConversationService],
 })

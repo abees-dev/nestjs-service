@@ -16,6 +16,7 @@ export class ConversationDetailResponse {
   createdAt: Date;
   updatedAt: Date;
   permission?: number;
+  user_id?: string;
 
   constructor(conversation: ConversationDetailResponse) {
     this._id = conversation?._id ?? null;
@@ -32,6 +33,7 @@ export class ConversationDetailResponse {
     this.createdAt = conversation?.createdAt ?? null;
     this.updatedAt = conversation?.updatedAt ?? null;
     this.permission = conversation?.permission ?? 0;
+    this.user_id = conversation?.user_id ?? '';
     this.setting = new ConversationSettingResponse(conversation?.setting) ?? null;
   }
 }

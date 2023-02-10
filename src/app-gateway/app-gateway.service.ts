@@ -17,6 +17,7 @@ import { verifyObjectId } from '../utils/util.objectId';
 import { PayloadNotificationDto } from '../notification/dto/payload-notification.dto';
 import { MESSAGE_PATTERN, NOTIFICATION_TYPE } from '../enum';
 import { Microservice } from '../microservice/micro.service';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class AppGatewayService {
@@ -60,7 +61,10 @@ export class AppGatewayService {
             conversation_id: payload.conversation_id,
             user_id,
           },
-          { last_seen_message: message._id },
+          {
+            last_seen_message: message._id,
+            no_of_not_seen: 0,
+          },
         ),
         conversation.save(),
       ]);
@@ -86,6 +90,22 @@ export class AppGatewayService {
 
       const connections = await this.redisService.get<UserConnection[]>(REDIS_CONNECTION);
 
+      await Promise.all(
+        conversation.members.map(async (item) => {
+          if (item.toString() !== user_id) {
+            await this.conversationMemberModel.findOneAndUpdate(
+              {
+                conversation_id: payload.conversation_id,
+                user_id: item,
+              },
+              {
+                $inc: { no_of_not_seen: 1 },
+              },
+            );
+          }
+        }),
+      );
+
       const members = conversation.members.map((item) => item.toString());
 
       const filterConnection =
@@ -94,9 +114,10 @@ export class AppGatewayService {
             members.includes(connection.user_id) && connection.room_id == '' && connection.user_id !== user_id,
         ) || [];
 
-      __socket
-        .to(filterConnection.map((item) => item.socket_id))
-        .emit('last_message', new MessageResponse(messageResponse[0]));
+      !isEmpty(filterConnection) &&
+        __socket
+          .to(filterConnection.map((item) => item.socket_id))
+          .emit('last_message', new MessageResponse(messageResponse[0]));
 
       const useOffline = members.filter(
         (item) => item !== user_id && !filterConnection.map((item) => item.user_id).includes(item),
@@ -181,6 +202,7 @@ export class AppGatewayService {
         },
         {
           last_seen_message: conversation.last_message,
+          no_of_not_seen: 0,
         },
       ),
         await this.redisService.set(REDIS_CONNECTION, newConnection);
