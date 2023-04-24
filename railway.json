@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "yarn start:dev",
+    "startCommand": "npm run start:dev",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
