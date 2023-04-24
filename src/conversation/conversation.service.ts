@@ -269,7 +269,7 @@ export class ConversationService {
   async getConversations(user_id: string, query: QueryConversationDto) {
     try {
       const order = query?.order || 'desc';
-      const numberOfLimit = query?.limit || 10;
+      const numberOfLimit = Number(query?.limit) || 10;
       const conversation = await this.conversationDocument
         .aggregate([
           {

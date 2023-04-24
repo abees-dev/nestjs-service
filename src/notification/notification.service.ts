@@ -1,8 +1,8 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
 import serviceAccount from '../../firebase-cert.json';
 import { DeleteDeviceDto, RegisterDeviceDto } from './dto/register-device.dto';
-import { CatchError } from '../utils/utils.error';
+import { CatchError, ExceptionResponse } from '../utils/utils.error';
 import { InjectModel } from '@nestjs/mongoose';
 import { PUSH_TOKEN_SCHEMA, PushTokenDocument } from './entities/push-token.entity';
 import mongoose, { Model } from 'mongoose';
@@ -17,6 +17,7 @@ import { NOTIFICATION_TYPE } from '../enum';
 import { QueryNotificationDto } from './dto/query.notification.dto';
 import { orderQuery } from '../utils/util.order.query';
 import { NotificationResponse } from '../response/NotificationResponse';
+import { UpdateNotificationDto } from './dto/update-notification.dto';
 
 @Injectable()
 export class NotificationService implements OnApplicationBootstrap {
@@ -257,6 +258,35 @@ export class NotificationService implements OnApplicationBootstrap {
             content: content,
           },
         }));
+    } catch (e) {
+      throw new CatchError(e);
+    }
+  }
+
+  async readNotification(user_id: string, updateNotificationDto: UpdateNotificationDto) {
+    try {
+      if (updateNotificationDto.type === 1) {
+        await this.notificationDocument.updateMany(
+          {
+            user_id: new mongoose.Types.ObjectId(user_id),
+          },
+          { is_read: true },
+        );
+        return new BaseResponse({});
+      }
+
+      if (!updateNotificationDto?.notification_id) {
+        throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Missing params notification_id');
+      }
+
+      await this.notificationDocument.findOneAndUpdate(
+        {
+          notification_id: new mongoose.Types.ObjectId(updateNotificationDto.notification_id),
+          user_id: new mongoose.Types.ObjectId(user_id),
+        },
+        { is_read: true },
+      );
+      return new BaseResponse({});
     } catch (e) {
       throw new CatchError(e);
     }

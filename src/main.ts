@@ -7,15 +7,14 @@ import { NotFoundExceptionFilter } from './utils/util.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { CONFIG_SERVICE } from './contrains';
 import * as process from 'process';
-import { RedisIoAdapter } from './app-gateway/adaptor/redis.adaptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const redisAdapter = new RedisIoAdapter(app);
-  await redisAdapter.connectToRedis();
+  // const redisAdapter = new RedisIoAdapter(app);
+  // await redisAdapter.connectToRedis();
 
-  app.useWebSocketAdapter(redisAdapter);
+  // app.useWebSocketAdapter(redisAdapter);
   app.setGlobalPrefix(process.env.PREFIX);
 
   const config = new DocumentBuilder()
@@ -47,7 +46,7 @@ async function bootstrap() {
 
   app.connectMicroservice(app.get(CONFIG_SERVICE).createMicroserviceOption());
 
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = Number(process.env.PORT) || 3002;
   await app.startAllMicroservices();
   await app.listen(PORT);
 }
