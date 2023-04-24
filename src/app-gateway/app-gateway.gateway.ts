@@ -13,7 +13,7 @@ import { SocketRoomDto } from './dto/socket-room.dto';
 import { MessageDto } from './dto/create-app-gateway.dto';
 import { BaseResponse } from '../response';
 
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway(8081, { cors: { origin: '*' } })
 export class AppGatewayGateway implements OnGatewayConnection, OnModuleInit {
   @WebSocketServer()
   private server: Server;
