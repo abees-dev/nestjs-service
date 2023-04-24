@@ -10,7 +10,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "rimraf dist && tsc",
+    "build": "nest build",
     "ts.check": "tsc --project tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

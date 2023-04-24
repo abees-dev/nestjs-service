@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
-import serviceAccount from '../../firebase-cert.json';
+import serviceAccount from '../firebase-cert.json';
 import { DeleteDeviceDto, RegisterDeviceDto } from './dto/register-device.dto';
 import { CatchError, ExceptionResponse } from '../utils/utils.error';
 import { InjectModel } from '@nestjs/mongoose';
