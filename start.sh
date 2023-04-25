@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /SERVICE
+cd /app
 
 CONFIG_ARGS="s|CONFIG_PORT|${CONFIG_PORT}|g;\
         	s|CONFIG_MONGO_URI|${CONFIG_MONGO_URI}|g;\

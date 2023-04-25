@@ -2,7 +2,7 @@ FROM node:latest
 
 
 # COPY ["SERVICE.tgz", "/SERVICE.tgz"]
-# COPY ["env", "/SERVICE/.env"]
+COPY ["env", "/app/.env"]
 COPY ["start.sh", "/start.sh"]
 RUN chmod -R 777 /start.sh
 
